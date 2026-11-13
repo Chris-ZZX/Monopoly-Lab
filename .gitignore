@@ -1,0 +1,27 @@
+# R / RStudio
+.Rhistory
+.RData
+.Rproj.user/
+Rplots.pdf
+
+# Slide build output (rebuild with: Rscript slides/build.R)
+slides/slides.tex
+slides/slides.pdf
+slides/slides-*.pdf
+*.aux
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+*.vrb
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# OS / personal settings
+.DS_Store
+.claude/settings.local.json
+
+# Previous years slides
+previous-years-slides/
