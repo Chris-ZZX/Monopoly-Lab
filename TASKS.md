@@ -10,53 +10,12 @@ Pick an open task, put your name in the table and push the change. Each task own
 | 1 | Markov chain and stationary distribution | Nikola (done) | `R/markov.R` | `03-markov` |
 | 2 | Check the chain by simulation, plus jail strategy | Nikola (done) | `R/walk.R` | `03-markov` |
 | 3 | Game engine: "Monopoly lite" | Nikola (done) | `R/game.R` | `04-simulation` |
-| 4 | Player personalities and tournament | Nikola (done) | `R/strategies.R` | `04-simulation`, `05-orange` |
-| 5 | Expected income and payback per colour set | *open* | `R/returns.R` | `05-orange` |
-| 6 | Board heatmap, story and presentation lead | *open* | `R/plots.R` | `01`, `06`, overall |
+| 4 | Player personalities and tournaments | Nikola (done) | `R/strategies.R` | `04-simulation`, `05-orange` |
+| 5 | Expected income and payback per colour set | *dropped* (slides are full) | — | — |
+| 6 | Story, intro, conclusion, heatmap | Nikola (done) | `R/plots.R` | `01`, `06` |
+| 7 | Rehearsal: who presents which slides, timed under 10 minutes | *open* | — | all |
 
-```
-board (0) ──> Markov chain (1) ──> sim check (2), income (5), board heatmap (6)
-          └─> game engine (3) ──> tournament (4)
-```
-
-Tasks 1–4 are done. For Task 5, `landing_probs(board, cards)` gives π (share of turns that *end* on each square) and `landings_per_turn(board, cards)` the expected number of *landings* per turn, which also counts the stops in between doubles. Rent depends on landings, so use the second. For Task 6, `board_tikz(board, fill = ..., values = ...)` in `R/plots.R` already draws a heatmap; see `slides/sections/03-markov.Rnw`.
-
-## 1. Markov chain (Nikola)
-
-- Transition matrix for one turn: two dice, doubles (three in a row → jail), Chance/Community Chest moves, Go To Jail, jail states.
-- Stationary distribution π (solve πP = π) and the most-landed squares.
-- Provides for others: `landing_probs(board, cards)`, a numeric vector of length 40 indexed by position that sums to 1.
-- Tests: rows of P sum to 1, π sums to 1.
-
-## 2. Check the chain by simulation, plus jail strategy
-
-- Roll one token around the board for many turns (no money). Compare landing frequencies with π, and plot how the gap shrinks as the number of turns grows.
-- Compare the two jail strategies, "pay and leave at once" and "sit in jail as long as allowed", and show how π changes.
-- Needs only `R/board.R`, so you can start now.
-
-## 3. Game engine: "Monopoly lite"
-
-One function, about the size of last year's zombie simulation: `play_game(board, cards, players, max_turns)` returns the winner and the final cash and properties.
-
-- **Keep:** buying, rent (full-set double rent, stations, utilities), houses and hotels, all 32 cards, jail, bankruptcy. The last player standing wins; at the turn cap, the richest player wins.
-- **Drop:** trading, auctions, mortgages, the house shortage.
-- Agree the interface with Task 4 on day one. For example, each player is a list of functions such as `buy(state, square)` and `build(state)`.
-
-## 4. Player personalities and tournament
-
-- Write each strategy as a personality: The Orange Fanatic, The Hoarder (buys everything), The Paris Snob (only Berlin and Paris), The Jet-Setter (airports only), and Grandma (never buys anything, collects €200 and knits). Grandma is a nod to last year's grandma deck, apparently a favourite of Hornik's. Add or change personalities as you like.
-- Run thousands of games (`set.seed()`), report win rates with 95% confidence intervals, and save them to `results/tournament.rds`.
-
-## 5. Expected income and payback per colour set
-
-- Combine π with the rent tables: expected rent per opponent turn for each set at 0–5 buildings, development cost, and the number of turns until a set pays for itself.
-- This gives the analytic answer to "why orange?", which Task 4 then tests in full games.
-
-## 6. Board heatmap, story and presentation lead
-
-- Board heatmap: π drawn on a square board layout, using `GROUP_COLOURS`. This is the key picture of the talk.
-- Owns the story and the jokes (title, uncle, cards), the intro and conclusion slides, and the 10-minute timing.
-- Runs one rehearsal and makes sure `Rscript slides/build.R` works for everyone.
+All slides are written; `slides/NOTES.md` explains the maths and numbers behind each one. What is left is Task 7: split the 20 slides between the six of us, read the notes for your slides, and rehearse once.
 
 ## Milestones
 

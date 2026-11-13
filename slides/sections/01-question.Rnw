@@ -1,12 +1,15 @@
 % Section 1 -- The question            Owner: Task 6 (presentation lead)   ~1.5 min
-% One frame: the board, revealed in five steps (board, dice, cards, jail, orange).
-% The board is drawn by board_tikz() in R/plots.R; every number below is
-% computed from `board` and `cards`. Chunk labels start with "intro-".
+% Four frames: the board, the dice, the cards, then Jail and the orange set.
+% The board is drawn by board_tikz() and the way out of Jail by
+% jail_exit_tikz(), both in R/plots.R; every number below is computed from
+% `board` and `cards`. Chunk labels start with "intro-".
 \boardsection{brown}{The question}
 
 <<intro-numbers, echo=FALSE, results=tex>>=
 cat("\\newcommand{\\introboard}{\n",
     paste(board_tikz(board), collapse = "\n"), "}\n", sep = "")
+cat("\\newcommand{\\introjailexit}{\n",
+    paste(jail_exit_tikz(board), collapse = "\n"), "}\n", sep = "")
 
 go     <- board$pos[board$type == "go"]
 jail   <- board$pos[board$type == "jail"]
@@ -39,14 +42,10 @@ defs <- c(
   go = go, jail = jail, gtj = gtj, landed = landed,
   roll = sum(roll), dieA = roll[1], dieB = roll[2],
   dicebars = paste0(totals, "/", ways, collapse = ","),
-  orange = paste(orange, collapse = ","),
-  notorange = paste(setdiff(seq_len(N_SQUARES), c(orange, jail)), collapse = ","),
-  orangeafter = paste0(orange, "/", to_orange, collapse = ","),
   orangeset = paste(to_orange, collapse = ", "),
   orangeways = paste(ways[totals %in% to_orange], collapse = " + "),
-
+  orangeor = paste(paste(head(to_orange, -1), collapse = ", "), "or", tail(to_orange, 1)),
   orangepct = round(100 * p_orange / 36),
-  orangenames = paste(board$name[orange], collapse = ", "),
   cardsquares = paste(board$pos[board$type %in% c("chance", "chest")], collapse = ","),
   chancedest = paste(dest, collapse = ","),
   nchance = nrow(ch),
@@ -58,8 +57,7 @@ defs <- c(
   ncapitals = sum(board$type == "street"),
   nairports = sum(board$type == "railroad"),
   doubles = RULES$doubles_to_jail,
-  ptriple = 6^RULES$doubles_to_jail,
-  uniformpct = 100 / N_SQUARES
+  ptriple = 6^RULES$doubles_to_jail
 )
 cat(sprintf("\\def\\pg%s{%s}\n", names(defs), defs), sep = "")
 @
@@ -84,7 +82,7 @@ cat(sprintf("\\def\\pg%s{%s}\n", names(defs), defs), sep = "")
   \node[pg big] at ([yshift=1.25cm]inner.center) {Monopoly, 1999 Euro edition};
   \node[pg caption] at ([yshift=0.2cm]inner.center)
     {\pgncapitals{} capitals, \pgnairports{} airports, 2 dice, \pgncards{} cards.\\[0.3ex]
-     Go round and round, buy cities, charge rent.\\[0.3ex]
+     Players go round the board, buy cities and charge rent.\\[0.3ex]
      The last player who is not broke wins.};
   \node[pg caption, text width=11cm, font=\normalsize] at ([yshift=-1.35cm]inner.center)
     {Follow one token: \ $X_t$ = where it stands after turn $t$};}
@@ -111,11 +109,14 @@ cat(sprintf("\\def\\pg%s{%s}\n", names(defs), defs), sep = "")
     \pgdie{(4.3,2.15)}{{-1,1},{0,0},{1,-1}}
   \end{scope}
   \node[pg caption, text width=5.6cm, align=flush left, anchor=north west]
-    at (6.9,5.7)
-    {$D = D_1 + D_2 \in \{2, \dots, 12\}$\\[0.8ex]
-     $\Pr(D = k) = \dfrac{6 - |k - 7|}{36}$\\[0.8ex]
-     one roll: \ square $i \to i + D \pmod{\pgnsquares}$\\[0.6ex]
-     {\footnotesize\color{pg-muted} 7 is the most likely total: $6/36$.}};}
+    at (6.9,6.25)
+    {$D_1, D_2$: the two dice\\
+     $D = D_1 + D_2$: their total, from 2 to 12\\[0.6ex]
+     $\Pr(D = k) = \dfrac{6 - |k - 7|}{36}$\\[0.6ex]
+     One roll: square $i$ $\to$ square $i + D$\\
+     {\footnotesize\color{pg-muted} (after square \pgnsquares, count on from GO)}};
+  \node[font=\footnotesize, text=pg-muted] at (3.9,2.3)
+    {7 is the most likely total: $6/36$.};}
 
 % Step 3: cards teleport you, but only the current state matters.
 \newcommand{\introstepcards}{%
@@ -125,73 +126,71 @@ cat(sprintf("\\def\\pg%s{%s}\n", names(defs), defs), sep = "")
   \foreach \d in \pgchancedest
     \draw[pg-orange, line width=0.9pt, -{Latex[length=2mm]}]
       (sq\pglanded.north) .. controls +(0,2.2) .. (sq\d);
-  \node[pg caption, text width=11.3cm, fill=pg-paper, inner sep=4pt]
+  \node[pg caption, text width=11.3cm, fill=pg-paper, fill opacity=0.8,
+        text opacity=1, inner sep=4pt]
     at ([yshift=0.75cm]inner.center)
-    {\pgnmovers{} of the \pgncards{} cards move you, e.g.\
-     $\Pr(\text{move} \mid \text{Chance}) = \pgnchancemove/\pgnchance$.\\[0.8ex]
+    {\pgnmovers{} of the \pgncards{} cards move you; on Chance,
+     \pgnchancemove{} of the \pgnchance{} do.\\[0.8ex]
      Still, the next turn depends only on where you are now:\\[0.5ex]
      $\Pr(X_{t+1} = j \mid X_t = i,\, X_{t-1} = i_{t-1}, \dots)
       = \Pr(X_{t+1} = j \mid X_t = i) = P_{ij}$\\[0.8ex]
      \textbf{A Markov chain} with transition matrix $P = (P_{ij})$.\\[0.6ex]
-     {\footnotesize\color{pg-muted} State: square + \emph{in Jail} (turn 1--3),
-      apart from \emph{Just Visiting}. Cards drawn at random.}};}
+     {\footnotesize\color{pg-muted} For this, the state must tell \emph{In Jail}
+      (and on which try) apart from \emph{Just Visiting},
+      and every card must be a random draw.}};}
 
-% Step 4: all roads lead to Jail.
+% Step 4: three ways into Jail, and one roll out of it lands on orange.
 \newcommand{\introstepjail}{%
-  \pic at (sq\pgjail) {pg token};
-  \draw[pg ring=pg-red] (sq\pggtj.south west) rectangle (sq\pggtj.north east);
-  \draw[pg ring=pg-red] (sq\pgjail.south west) rectangle (sq\pgjail.north east);
-  \draw[pg-red, line width=2.5pt, -{Latex[length=4mm]}]
-    (sq\pggtj.south west) to[bend left=10] (sq\pgjail.north east);
-  \node[pg caption, text width=6.2cm, anchor=north west, align=flush left]
-    at ([shift={(0.25cm,-0.2cm)}]inner.north west)
-    {Three ways into \textbf{Jail}:\\[0.4ex]
+  \introjailexit
+  % Three ways in (top left), with an arrow down to the Jail corner.
+  \node[pg caption, text width=6.4cm, anchor=north west, align=flush left]
+    (ways) at (0.1,7.6)
+    {{\robotoslab\bfseries\large Jail is a magnet.} Three ways in:\\[0.6ex]
      \begin{tabular}{@{\textbullet\ }l@{\quad}l}
-       land on \emph{Go To Jail} & $1$ square of $\pgnsquares$ \\
-       draw a \emph{Go to Jail} card & $\pgnjailcards/\pgncards$ \\
-       \pgdoubles{} doubles in a row & $(1/6)^{\pgdoubles} = 1/\pgptriple$
+       land on \emph{Go To Jail}    & 1 of \pgnsquares{} squares \\
+       draw a \emph{Go to Jail} card & \pgnjailcards{} of \pgncards{} cards \\
+       roll doubles \pgdoubles{} times in a row & $(1/6)^{\pgdoubles} = 1/\pgptriple$
      \end{tabular}};
-  \node[pg caption, text width=6.3cm, anchor=south east, align=flush right]
-    at ([shift={(-0.3cm,0.95cm)}]inner.south east)
-    {$\pi_i$: long-run share of turns on square $i$\\
-     Fair board: $\pi_i = 1/\pgnsquares = \pguniformpct\%$. And Jail?};
-  \node[pg big, anchor=south east, text=pg-red]
-    at ([shift={(-0.3cm,0.2cm)}]inner.south east) {Jail is a magnet.};}
-
-% Step 5: the orange set and the uncle.
-\newcommand{\introsteporange}{%
-  \foreach \s in \pgnotorange
-    \fill[pg-paper, opacity=0.8] (sq\s.south west) rectangle (sq\s.north east);
-  \foreach \s in \pgorange
-    \draw[pg ring=pg-orange] (sq\s.south west) rectangle (sq\s.north east);
-  \foreach \s/\k in \pgorangeafter
-    \node[fill=pg-orange, text=white, font=\scriptsize\bfseries, rounded corners=2pt,
-          inner sep=2pt, anchor=west] at ([xshift=0.12cm]sq\s.east) {+\k};
-  \node[pg caption, anchor=west, text width=6.3cm, align=flush left]
-    at ([xshift=0.9cm, yshift=-0.2cm]inner.west)
-    {Fresh out of Jail, one roll puts you\\ on \pgorangenames:\\[1ex]
-     $\Pr(D \in \{\pgorangeset\}) = \dfrac{\pgorangeways}{36} \approx \pgorangepct\%$};
-  \node[draw=pg-ink, fill=white, rounded corners=6pt, inner sep=6pt,
+  \draw[pg-red, line width=2pt, -{Latex[length=3.5mm]}]
+    (exjail.north |- 0,5.5) -- (exjail.north);
+  % The bars, and the way out to orange.
+  \node[pg caption, text width=4.2cm, anchor=north west, align=flush left,
+        font=\footnotesize, text=pg-muted]
+    at (2.6,5.0) {Bars: how many of the 36 dice rolls reach each square from Jail.};
+  \node[pg caption, text width=6.6cm, anchor=north, align=center]
+    at (10.75,5.12)
+    {Pay to leave Jail, roll \pgorangeor{}: you are on orange.\\[0.4ex]
+     $\Pr(D \in \{\pgorangeset\}) = (\pgorangeways)/36 \approx \pgorangepct\,\%$};
+  % The uncle and the question (top right).
+  \node[draw=pg-ink, fill=white, rounded corners=6pt, inner sep=5pt,
         font=\large\itshape, text=pg-ink]
-    (uncle) at ([shift={(2.2cm,1.65cm)}]inner.center)
-    {``Always buy orange!''};
+    (uncle) at (10.9,7.25) {``Always buy orange!''};
   \node[font=\footnotesize, text=pg-muted, anchor=north east]
-    at (uncle.south east) {your uncle, every Christmas};
-  \node[pg big, text=pg-orange!80!pg-ink, anchor=south]
-    at ([xshift=2.2cm, yshift=0.75cm]inner.south) {Should you buy Vienna?};
-  \node[font=\footnotesize, text=pg-ink, anchor=south]
-    at ([xshift=2.2cm, yshift=0.25cm]inner.south)
-    {Solve $\pi = \pi P$, then let the uncle play full games.};}
+    at ([yshift=-0.05cm]uncle.south east) {your uncle, every Christmas};
+  \node[pg big, text=pg-orange!80!pg-ink] at (10.9,5.95) {Should you buy Vienna?};
+  \node[font=\footnotesize, text=pg-ink] at (10.9,5.4)
+    {First the long-run distribution $\pi$, then full games.};}
 
-% ---- The frame -----------------------------------------------------------------
+% ---- The frames: one per step ---------------------------------------------------
+\begin{frame}
+  \vspace*{-0.2cm}\centering
+  \begin{tikzpicture}\introboard\introstepboard\end{tikzpicture}
+\end{frame}
+
+\begin{frame}
+  \vspace*{-0.2cm}\centering
+  \begin{tikzpicture}\introboard\introstepdice\end{tikzpicture}
+\end{frame}
+
+\begin{frame}
+  \vspace*{-0.2cm}\centering
+  \begin{tikzpicture}\introboard\introstepcards\end{tikzpicture}
+\end{frame}
+
 \begin{frame}
   \vspace*{-0.2cm}\centering
   \begin{tikzpicture}
-    \introboard
-    \only<1>{\introstepboard}
-    \only<2>{\introstepdice}
-    \only<3>{\introstepcards}
-    \only<4>{\introstepjail}
-    \only<5>{\introsteporange}
+    \useasboundingbox (0,0) rectangle (14,7.7);
+    \introstepjail
   \end{tikzpicture}
 \end{frame}

@@ -14,8 +14,8 @@
 
 \title{Orange Is the New Black}
 \subtitle{Which Monopoly square do you land on most,\\ and should you buy Vienna?}
-\author[Group 8]{Atharv Gudi, Zixin Zheng, Richard Takacs, Jakob Lutz,\\
-  Parker Joseph Edward Ellis, Nikola Meshkovski}
+\author[Group 8]{Nikola Meshkovski, Atharv Gudi, Zixin Zheng,\\
+  Richard Takacs, Jakob Lutz, Parker Joseph Edward Ellis}
 \institute{Computing, Prof.\ Kurt Hornik, WU Vienna}
 \date{24 November 2026}
 

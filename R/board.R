@@ -34,10 +34,9 @@ RULES <- list(
   doubles_to_jail     = 3,               # 3rd double in one turn sends you to jail
   full_set_multiplier = 2,               # unimproved street rent if owner holds the whole group
   railroad_rent       = c(25, 50, 100, 200),  # by number of railroads owned
-  utility_multiplier  = c(4, 10),        # times the dice total, by number of utilities owned
-  bank_houses         = 32,
-  bank_hotels         = 12
+  utility_multiplier  = c(4, 10)         # times the dice total, by number of utilities owned
 )
+# Not modelled: the bank's limit of 32 houses and 12 hotels (see R/game.R).
 
 # Plot colour of each street group.
 # Keep in sync with the pg-* colours in slides/beamerthemepassgo.sty.

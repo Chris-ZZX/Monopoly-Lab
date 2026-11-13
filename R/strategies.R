@@ -28,8 +28,9 @@ personalities <- function(board) {
   )
 }
 
-# One player per colour set, each buying only its own set. With no overlap
-# every set gets completed, so the game is a fair fight between the sets.
+# One player per colour set, each buying only its own set. Nobody competes for
+# a city, so the game compares the sets themselves. A set is completed only if
+# its owner lands on every one of its squares before going bankrupt.
 set_fanatics <- function(board, reserve = 50) {
   groups <- names(GROUP_COLOURS)
   lapply(groups, function(gr) {

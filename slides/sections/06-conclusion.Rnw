@@ -1,22 +1,90 @@
 % Section 6 -- Conclusion              Owner: Task 6 (presentation lead)     ~1 min
 \boardsection{red}{Conclusion}
 
+<<end-setup, echo=FALSE>>=
+# Uses pi_stay (section 3) and the tournament results (section 5).
+is_street   <- board$type == "street"
+cap_rank    <- board$name[is_street][order(-pi_stay[seq_len(N_SQUARES)][is_street])]
+jail_share  <- sum(pi_stay[N_SQUARES + seq_len(N_JAIL_STATES)])
+co_leaders  <- gsub("_", " ", setdiff(tied, "orange"))
+# Counting every landing (also the stops between doubles) instead of turn ends.
+land        <- landings_per_turn(board, cards)
+land_top    <- names(sort(land, decreasing = TRUE))[1:2]
+stopifnot("slide 'Conclusion' needs Jail and the top capital first by landings too" =
+            identical(land_top, c(board$name[jail_sq], cap_rank[1])))
+to_orange   <- board$pos[board$group %in% "orange"] - jail_sq
+@
+
 \begin{frame}{Conclusion}
-  \todo{answer both questions in one sentence each}
+  \textbf{Where do you land most?}\\
+  In Jail: \Sexpr{pct(jail_share)}\,\% of all turns end there, against
+  \Sexpr{100 / N_SQUARES}\,\% per square on a fair board. Among the capitals:
+  \Sexpr{cap_rank[1]}, then \Sexpr{cap_rank[2]} and \Sexpr{cap_rank[3]} (almost tied).
+  Counting every landing, also the stops between doubles, Jail and \Sexpr{cap_rank[1]}
+  stay on top. Orange lies \Sexpr{min(to_orange)} to \Sexpr{max(to_orange)} squares
+  after Jail, and totals near 7 are the most likely dice rolls.
+  \bigskip
+
+  \textbf{Should you buy Vienna?}\\
+  Yes, if you can get the whole set: in a fight between colour sets, orange is
+  joint best with \Sexpr{paste(co_leaders, collapse = " and ")}.
+  But buying \emph{only} orange is not enough: against our opponents, the Hoarder,
+  who buys everything, wins \Sexpr{pc(rp$rate[rp$player == "Hoarder"])}\,\% of games.
+  \bigskip
+
+  \centering
+  \begin{tikzpicture}
+    \node[draw=pg-ink, fill=white, rounded corners=6pt, inner sep=6pt,
+          text=pg-ink, align=center]
+      {\large\itshape ``Always buy orange!''\\[0.5ex]
+       \normalsize Your uncle is half right: buy orange, and everything else too.};
+  \end{tikzpicture}
 \end{frame}
 
 \chancecard{Go directly to questions.\\[0.4em]
-  \normalsize Do not pass GO. Do not collect €200.}
+  \normalsize Do not pass GO.\\ Do not collect €200.}
 
 \begin{frame}{References}
-  \small
-  \begin{itemize}
-    \item Ash, R.\,B. and Bishop, R.\,L. (1972). Monopoly as a Markov process.
-          \emph{Mathematics Magazine} 45(1), 26--29.
-    \item Stewart, I. (1996). How fair is Monopoly?
-          \emph{Scientific American} 274(4), 104--105.
-    \item R Core Team (\Sexpr{R.version$year}). \emph{R: A Language and Environment
-          for Statistical Computing}. R Foundation, Vienna.
-  \end{itemize}
-  \todo{add the R packages we use}
+  \scriptsize
+  \begin{columns}[T]
+    \begin{column}{0.49\textwidth}
+      \textbf{Monopoly and Markov chains}
+      \begin{itemize}\setlength{\itemsep}{0ex}
+        \item Ash, R.\,B. and Bishop, R.\,L. (1972). Monopoly as a Markov process.
+              \emph{Mathematics Magazine} 45(1), 26--29.
+        \item Stewart, I. (1996). How fair is Monopoly?
+              \emph{Scientific American} 274(4), 104--105.
+        \item Levin, D.\,A. and Peres, Y. (2017). \emph{Markov Chains and Mixing
+              Times}, 2nd ed. American Mathematical Society.
+              {\color{pg-muted}(stationary distribution, distance $d$)}
+        \item Clopper, C.\,J. and Pearson, E.\,S. (1934). The use of confidence or
+              fiducial limits illustrated in the case of the binomial.
+              \emph{Biometrika} 26(4), 404--413.
+      \end{itemize}
+      \textbf{The board}
+      \begin{itemize}\setlength{\itemsep}{0ex}
+        \item Waddingtons / Hasbro (1999). \emph{Monopoly}, Euro edition.
+              Board game; layout from \texttt{worldofmonopoly.com}.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.49\textwidth}
+      \textbf{Software}
+      \begin{itemize}\setlength{\itemsep}{0ex}
+        \item R Core Team (\Sexpr{R.version$year}). \emph{R: A Language and Environment
+              for Statistical Computing}. R Foundation, Vienna.
+        \item Leisch, F. (2002). Sweave: Dynamic generation of statistical reports
+              using literate data analysis. In \emph{Compstat 2002}, 575--580.
+              Physica, Heidelberg.
+        \item M\"uller, K. (2020). \emph{here: A Simpler Way to Find Your Files}.
+              R package version \Sexpr{packageVersion("here")}.
+        \item Wickham, H. (2011). testthat: Get started with testing.
+              \emph{The R Journal} 3(1), 5--10.
+        \item Xie, Y. (2019). TinyTeX: A lightweight, cross-platform, and
+              easy-to-maintain \LaTeX{} distribution based on \TeX{} Live.
+              \emph{TUGboat} 40(1), 30--32.
+        \item Tantau, T. et al. \emph{The beamer class} (v3.71) and
+              \emph{Ti\emph{k}Z and PGF} (v3.1.10). CTAN.
+      \end{itemize}
+    \end{column}
+  \end{columns}
 \end{frame}

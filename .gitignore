@@ -9,6 +9,7 @@ slides/slides.tex
 slides/slides.pdf
 slides/slides-*.pdf
 slides/*-concordance.tex
+slides/Sweave.sty
 *.aux
 *.log
 *.nav

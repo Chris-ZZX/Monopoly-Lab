@@ -1,10 +1,10 @@
-% Section 5 -- Is orange optimal?      Owner: Task 5 (income) + Nikola (Task 4) ~3 min
-% Code: R/returns.R (Task 5), analysis/tournament.R (Task 4).
+% Section 5 -- Is orange optimal?      Owner: Nikola (Task 4)               ~2.5 min
+% Code: analysis/tournament.R, R/strategies.R.
 % Prefix chunk labels with "orange-".
 \boardsection{orange}{Is orange optimal?}
 
 <<orange-setup, echo=FALSE>>=
-tour <- readRDS(here::here("results", "tournament.rds"))
+# `tour` is read in section 4.
 pers_cols <- c("Orange Fanatic" = GROUP_COLOURS[["orange"]],
                "Hoarder" = "#2E2E2E", "Paris Snob" = GROUP_COLOURS[["dark_blue"]],
                "Jet-Setter" = "#9C9C9C", "Grandma" = GROUP_COLOURS[["pink"]])
@@ -15,8 +15,9 @@ gp <- tour$personalities$games
 fan_set  <- gp$orange_by %in% "Orange Fanatic"     # fanatic got all three
 hoard_set <- gp$orange_by %in% "Hoarder"
 fan_win  <- gp$winner == "Orange Fanatic"
+snob_set <- gp$dark_blue_by %in% "Paris Snob"   # snob got Berlin and Paris
 gc <- tour$colour_war$games
-# Share of games in which each uncle completed his own set.
+# Share of games in which each player completed its own set.
 sets <- names(GROUP_COLOURS)
 own  <- vapply(sets, function(s) mean(gc[[paste0(s, "_by")]] %in% s), 1)
 best_other <- names(which.max(own[sets != "orange"]))
@@ -27,22 +28,24 @@ best_other <- names(which.max(own[sets != "orange"]))
 cap  <- function(x) sub("^(.)", "\\U\\1", x, perl = TRUE)   # capitalise first letter
 nice <- function(x) cap(gsub("_", " ", x))
 tied <- rc$player[rc$upper >= rc$lower[1]]   # intervals overlapping the leader's
-tie_text <- cap(if (length(tied) > 1) {
-  paste0(paste(gsub("_", " ", head(tied, -1)), collapse = ", "), " and ",
-         gsub("_", " ", tail(tied, 1)), " overlap: a tie at the top.")
-} else paste0(gsub("_", " ", tied), " wins clearly."))
+tie_text <- if (length(tied) > 1) {
+  paste0("The intervals of ", paste(gsub("_", " ", head(tied, -1)), collapse = ", "),
+         " and ", gsub("_", " ", tail(tied, 1)), " overlap: we cannot rank them.")
+} else paste0(nice(tied), " wins clearly.")
 stopifnot(
-  "slide 'Orange's edge' needs orange among the leaders" = "orange" %in% tied,
-  "slide 'Orange's edge' needs orange completed most often" =
+  "slide 'Tournament 2' needs orange among the leaders" = "orange" %in% tied,
+  "slide 'Conclusion' needs orange tied with at least one other set" = length(tied) > 1,
+  "slide 'Tournament 1' needs the Paris Snob ahead of the Orange Fanatic" =
+    rp$rate[rp$player == "Paris Snob"] > rp$rate[rp$player == "Orange Fanatic"],
+  "slide 'Tournament 1' needs no Fanatic wins without orange" = !any(fan_win & !fan_set),
+  "slide 'Tournament 2' needs orange completed most often" =
     names(which.max(own)) == "orange",
-  "slide 'Orange is strong, if you get it' needs a win rate above 50%" =
-    mean(fan_win[fan_set]) > 0.5
+  "slide 'Tournament 1' needs a win rate above 50% once orange is complete" =
+    mean(fan_win[fan_set]) > 0.5,
+  "slide 'Conclusion' needs the Hoarder to win tournament 1" =
+    rp$player[1] == "Hoarder"
 )
 @
-
-\begin{frame}{Expected income per colour set}
-  \todo{rent per opponent turn and payback time per set, from $\pi$ (Task 5)}
-\end{frame}
 
 \begin{frame}{Tournament 1: all five at one table}
   \begin{columns}[c]
@@ -54,49 +57,54 @@ plot_win_rates(rp, pers_cols, chance_level = 1 / nrow(rp))
     \end{column}
     \begin{column}{0.40\textwidth}
       \small
-      \Sexpr{format(tour$n_games, big.mark = ",")} games, seats shuffled,
-      95\,\% confidence intervals. Dashed: $1/\Sexpr{nrow(rp)}$, pure luck.
+      \Sexpr{format(tour$n_games, big.mark = ",")} games, seats shuffled.
+      Dot: share won (its 95\,\% interval is as wide).
+      Dashed: $1/\Sexpr{nrow(rp)}$, pure luck.
       \medskip
 
       The \textbf{Hoarder} wins \Sexpr{pc(rp$rate[rp$player == "Hoarder"])}\,\%.
-      It even completes orange first in \Sexpr{pc(mean(hoard_set))}\,\% of games.
+      It is the first to own all of orange in \Sexpr{pc(mean(hoard_set))}\,\%
+      of all games.
       \medskip
 
-      The \textbf{Orange Fanatic} gets all three in only
-      \Sexpr{pc(mean(fan_set))}\,\%, but then wins
-      \Sexpr{pc(mean(fan_win[fan_set]))}\,\% of them.
-      Orange is strong, \emph{if} you get it.
+      The \textbf{Orange Fanatic} completes orange in only
+      \Sexpr{pc(mean(fan_set))}\,\% of games. It wins \Sexpr{pc(mean(fan_win[fan_set]))}\,\%
+      of those and none of the others.
+      \medskip
+
+      The \textbf{Paris Snob} needs only two cities: it completes its set in
+      \Sexpr{pc(mean(snob_set))}\,\% of games.
     \end{column}
   \end{columns}
 \end{frame}
 
-\begin{frame}{Tournament 2: colour war}
+\begin{frame}{Tournament 2: one player per colour set}
   \begin{columns}[c]
-    \begin{column}{0.58\textwidth}
+    \begin{column}{0.50\textwidth}
 \setkeys{Gin}{width=\linewidth}
-<<orange-war, fig=TRUE, echo=FALSE, width=4.8, height=3.3>>=
+<<orange-war, fig=TRUE, echo=FALSE, width=4.4, height=3.4>>=
 plot_win_rates(rc, GROUP_COLOURS, chance_level = 1 / nrow(rc))
 @
     \end{column}
-    \begin{column}{0.40\textwidth}
+    \begin{column}{0.48\textwidth}
       \small
-      Eight uncles, one colour set each: nobody fights over a city.
-      \Sexpr{format(tour$n_games, big.mark = ",")} games.
+      \Sexpr{nrow(rc)} players, each buying only one colour set: nobody competes for
+      a city. \Sexpr{format(tour$n_games, big.mark = ",")} games.
+      Dashed line: $1/\Sexpr{nrow(rc)}$, pure luck.
       \medskip
 
+      Win rate [95\,\% confidence interval]:\\
       \Sexpr{nice(rc$player[1])}: \Sexpr{pc(rc$rate[1])}\,\%
       [\Sexpr{pc(rc$lower[1])}, \Sexpr{pc(rc$upper[1])}].\\
       \Sexpr{nice(rc$player[2])}: \Sexpr{pc(rc$rate[2])}\,\%
-      [\Sexpr{pc(rc$lower[2])}, \Sexpr{pc(rc$upper[2])}].
-      \medskip
-
+      [\Sexpr{pc(rc$lower[2])}, \Sexpr{pc(rc$upper[2])}].\\
       \Sexpr{tie_text}
       \medskip
 
-      Orange's edge: it gets \emph{completed} most often,
-      \Sexpr{pc(own[["orange"]])}\,\% of games
-      (next: \Sexpr{gsub("_", " ", best_other)}, \Sexpr{pc(max(own[sets != "orange"]))}\,\%),
-      because its squares are landed on most.
+      Orange's edge: its owner completes the set most often
+      (\Sexpr{pc(own[["orange"]])}\,\% of games; next is
+      \Sexpr{gsub("_", " ", best_other)}, \Sexpr{pc(max(own[sets != "orange"]))}\,\%),
+      in line with its high $\pi$ on the heatmap.
     \end{column}
   \end{columns}
 \end{frame}

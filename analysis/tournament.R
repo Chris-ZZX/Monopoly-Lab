@@ -1,11 +1,11 @@
 # analysis/tournament.R -- Task 4: let the players fight it out.
-# Run from anywhere in the repo:  Rscript analysis/tournament.R   (about 1 minute)
+# Run from anywhere in the repo:  Rscript analysis/tournament.R   (about 2 minutes)
 # Saves results/tournament.rds, which the slides read.
 #
 # Two tournaments:
 #   personalities  the five personalities of the talk, all at one table
-#   colour war     eight players, each buying only one colour set, so every
-#                  set gets completed: which set wins a fair fight?
+#   colour war     eight players, each buying only one colour set, so nobody
+#                  competes for a city: which set wins a fair fight?
 
 source(here::here("R", "board.R"))
 source(here::here("R", "game.R"))

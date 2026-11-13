@@ -4,57 +4,55 @@
 % Prefix chunk labels with "sim-".
 \boardsection{green}{Simulation}
 
+<<sim-setup, echo=FALSE>>=
+tour <- readRDS(here::here("results", "tournament.rds"))
+n_pers <- length(personalities(board))
+n_sets <- length(set_fanatics(board))
+@
+
 \chestcard{Bank error in your favour.\\[0.4em]
-  \normalsize Simulate 10\,000 games for free.}
+  \normalsize Simulate \Sexpr{format(2 * tour$n_games, big.mark = "\\,")} games for free.}
 
 \begin{frame}{Monopoly lite: the rules we simulate}
+  \small
+  Each game has \Sexpr{n_pers} players (tournament 1) or \Sexpr{n_sets} players
+  (tournament 2), and everyone starts on GO with €\Sexpr{RULES$starting_cash}.
+  \smallskip
   \begin{columns}[T]
     \begin{column}{0.48\textwidth}
       \textbf{We keep}
-      \begin{itemize}
-        \item buying, rent, full-set double rent
-        \item airports and utilities by number owned
+      \begin{itemize}\setlength{\itemsep}{0.1ex}
+        \item buying cities, airports and utilities
+        \item rent, doubled on a full colour set without houses
         \item houses and hotels, built evenly
-        \item all \Sexpr{nrow(cards)} cards, doubles, jail
-        \item bankruptcy: cash and cities go to the creditor
+        \item all \Sexpr{nrow(cards)} cards, doubles and Jail
+        \item bankruptcy: cash and property go to whoever
+              is owed (a player or the bank)
       \end{itemize}
     \end{column}
     \begin{column}{0.48\textwidth}
       \textbf{We drop}
-      \begin{itemize}
+      \begin{itemize}\setlength{\itemsep}{0.1ex}
         \item trading and auctions
-        \item mortgages (you sell houses at half price)
-        \item house shortage
+        \item mortgages: short of cash, you sell houses at half price
+        \item the limit on the number of houses
       \end{itemize}
-      \medskip
-      \textbf{Game over}
-      \begin{itemize}
-        \item last player standing wins
-        \item after 300 rounds: richest net worth wins
+      \smallskip
+      \textbf{Who wins}
+      \begin{itemize}\setlength{\itemsep}{0.1ex}
+        \item the last player who is not bankrupt
+        \item after \Sexpr{tour$max_rounds} rounds of turns: the highest net
+              worth (cash + property and buildings at cost)
       \end{itemize}
     \end{column}
   \end{columns}
-\end{frame}
-
-\begin{frame}[fragile]{One game in R}
-<<sim-one-game>>=
-set.seed(24)
-players <- personalities(board)
-res <- play_game(board, cards, players)
-res$name; res$rounds; res$ended
-@
-  \vfill
-  {\small A player is a list: a \texttt{buy(game, me, pos)} function,
-   the cash it always keeps, and its jail habit.
-   \texttt{play\_game()} is \Sexpr{length(deparse(play_game))} lines;
-   the whole engine about \Sexpr{length(readLines(here::here("R", "game.R")))}.}
 \end{frame}
 
 \begin{frame}{Meet the players}
   \centering
   \begin{tabular}{lll}
     \toprule
-    Player & Buys & Keeps \\
+    Player & Buys & Cash reserve \\
     \midrule
 <<sim-players, echo=FALSE, results=tex>>=
 buys <- c("Orange Fanatic" = "Stockholm, Vienna, Lisbon only",
@@ -69,6 +67,21 @@ for (p in personalities(board)) {
     \bottomrule
   \end{tabular}
   \vfill
-  {\small Everyone builds houses on every full set as soon as the cash allows,
-  and pays to leave jail at once.}
+  {\small The cash reserve is money a player never spends on buying or building.
+  Everyone builds houses on every full set as soon as the reserve allows,
+  and pays to leave Jail at once.}
+\end{frame}
+
+\begin{frame}[fragile]{One game in R}
+<<sim-one-game>>=
+set.seed(69)
+players <- personalities(board)
+res <- play_game(board, cards, players)
+res$name; res$rounds; res$ended
+@
+  \vfill
+  {\small Each player is a list: a function \texttt{buy()} that says yes or no
+   to a city, the cash reserve, and the jail rule.
+   \texttt{play\_game()} returns the winner, the number of rounds and how the
+   game ended.}
 \end{frame}

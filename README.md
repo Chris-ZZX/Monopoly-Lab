@@ -28,23 +28,30 @@ board[board$group %in% "orange", ]
 | Do this | Command (from the repo folder) |
 |---|---|
 | Run the tests | `Rscript -e 'testthat::test_dir(here::here("tests"))'` |
-| Build the slides | `Rscript slides/build.R` → `slides/slides.pdf` (or **Compile PDF** in RStudio) |
+| Build the slides | `Rscript slides/build.R` → `slides/slides.pdf` (or **Compile PDF** on `slides.Rnw` in RStudio) |
+| Compile in a TeX editor | run the build once, then `slides/slides.tex` compiles on its own. Rerun the build after editing any `.Rnw` |
 | Check the slides' maths | read `slides/NOTES.md`, one section per slide |
 
 ## What is where
 
 ```
-data/              the board and card decks as CSV (column guide: data/README.md)
+data/board.csv, cards.csv  the board and the card decks (column guide: data/README.md)
 R/board.R          loads + checks the data; RULES constants; move() and nearest()
-R/<topic>.R        one file per task (markov.R, game.R, ...), functions only
-analysis/          scripts that run long simulations and save results/
+R/markov.R         the Markov chain: transition matrix P and stationary distribution
+R/walk.R           simulates one token with dice and cards, to check the chain
+R/game.R           "Monopoly lite": one full game with money
+R/strategies.R     the player personalities and the tournaments
+R/plots.R          the board pictures (TikZ) and plots for the slides
+analysis/          scripts that run the long simulations and save results/
 results/           saved .rds results the slides read (keeps slide builds fast)
 tests/             testthat checks, one file per R/ file
 slides/slides.Rnw  main Beamer file; each section lives in slides/sections/
+slides/NOTES.md    speaker notes: the maths and numbers behind every slide
 slides/beamerthemepassgo.sty   our Beamer theme (title deed, board footline, cards)
+slides/build.R     builds slides/slides.pdf
 ```
 
-Rerun the long simulations (about 1.5 minutes each) only when the model changes:
+Rerun the long simulations (about 2 minutes for the tournaments, under 1 for the walk) only when the model changes:
 
 ```sh
 Rscript analysis/walk.R         # Task 2 -> results/walk.rds
@@ -71,7 +78,7 @@ These keep six people's code compatible:
 
 ## Slides
 
-The story: an uncle swears by the orange set. We find where you really land (Markov chain), then let five player personalities fight it out (simulation). The title, *Orange Is the New Black*, is a nod to the fact that Jail is the most visited square.
+The story: an uncle swears by the orange set. We find where you really land (Markov chain), then let player personalities fight it out in two tournaments of 5,000 games each (simulation). The title, *Orange Is the New Black*, is a nod to the fact that Jail is the most visited square.
 
 - `slides/slides.Rnw` loads `board` and `cards` once and includes one file per section from `slides/sections/`. Edit only your section to avoid merge conflicts. Each section file lists its owner and minutes at the top, 10 minutes in total.
 - Our theme, `passgo`, has a title deed title page, frame titles in the section's colour, and a footline showing the board, where a token goes once around during the talk. Theme commands:

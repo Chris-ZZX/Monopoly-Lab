@@ -28,7 +28,7 @@ We use the **1999 Monopoly Euro edition** (Waddingtons/Hasbro). Its 22 propertie
 | `rent`, `rent_1h` … `rent_4h`, `rent_hotel` | Rent with 0–4 houses or a hotel |
 | `tax` | Amount paid when landing on a tax square |
 
-Rules that are not per-square live in `RULES` in `R/board.R`: railroad and utility rents (they depend on how many you own), double rent for an unimproved full set, the GO salary, jail rules, starting cash and house supply.
+Rules that are not per-square live in `RULES` in `R/board.R`: railroad and utility rents (they depend on how many you own), double rent for an unimproved full set, the GO salary, jail rules and starting cash.
 
 ## cards.csv: 16 Chance + 16 Community Chest cards
 

@@ -1,20 +1,11 @@
-% Section 2 -- The board as data       Owner: Nikola (board setup)          ~1 min
+% Section 2 -- The board as data       Owner: Nikola (board setup)          ~0.5 min
 % Uses `board` and `cards` from slides.Rnw. Prefix chunk labels with "board-".
+% One frame: the eight colour sets, which the tournaments refer back to.
 \boardsection{pink}{The board}
 
-\begin{frame}[fragile]{The board is just a data frame}
-<<board-orange>>=
-orange <- subset(board, group == "orange")
-orange[, c("name", "country", "price", "rent_hotel")]
-@
-  \vfill
-  Row number = board position.
-  \Sexpr{nrow(board)} squares, \Sexpr{sum(!is.na(board$price))} for sale,
-  \Sexpr{nrow(cards)} cards: two CSV files, checked on load.
-\end{frame}
-
-\begin{frame}{22 capitals, eight colour sets}
-  \centering
+\begin{frame}{The board in R: \Sexpr{sum(board$type == "street")} capitals in
+  \Sexpr{length(unique(board$group[board$type == "street"]))} colour sets}
+  \centering\small
   \begin{tabular}{llrrr}
     \toprule
     Set & Capitals & Set price & House & Top hotel rent \\
@@ -33,6 +24,7 @@ for (g in unique(streets$group)) {
     \bottomrule
   \end{tabular}
   \vfill
-  {\small The most expensive square is \Sexpr{board$name[which.max(board$price)]}.
+  {\small The board and the \Sexpr{nrow(cards)} cards are two CSV files, read into
+  R as data frames. Row $i$ of \texttt{board} is square $i$, counted from GO.
   Fun fact: the 1999 board lists Geneva as the capital of Switzerland.}
 \end{frame}
