@@ -1,0 +1,28 @@
+% Section 3 -- Markov chain            Owner: Nikola (Task 1) + Task 2       ~2.5 min
+% Code: R/markov.R. Prefix chunk labels with "markov-".
+\boardsection{darkblue}{Markov chain}
+
+\chancecard{Advance to the Markov chain.\\[0.4em]
+  \normalsize If you pass GO, collect €200.}
+
+\begin{frame}[fragile]{The board as a Markov chain}
+  \begin{itemize}
+    \item State: the square you stand on (+ jail states)
+    \item One step = one turn: dice, doubles, cards, Go To Jail
+    \item $P_{ij} = \Pr(\text{end turn on } j \mid \text{start on } i)$,
+          \ long run: $\pi = \pi P$, \ $\sum_i \pi_i = 1$
+  \end{itemize}
+  \medskip
+<<markov-dice>>=
+sums <- outer(1:6, 1:6, "+")  # all 36 rolls of two dice
+table(sums)
+@
+\end{frame}
+
+\begin{frame}{Where do you land most?}
+  \todo{$\pi$ as a heatmap on the board, top 5 squares (Tasks 1 + 6)}
+\end{frame}
+
+\begin{frame}{Check: theory vs.\ simulation}
+  \todo{simulated landing frequencies converge to $\pi$; jail strategy effect (Task 2)}
+\end{frame}

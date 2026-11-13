@@ -1,0 +1,22 @@
+% Section 6 -- Conclusion              Owner: Task 6 (presentation lead)     ~1 min
+\boardsection{red}{Conclusion}
+
+\begin{frame}{Conclusion}
+  \todo{answer both questions in one sentence each}
+\end{frame}
+
+\chancecard{Go directly to questions.\\[0.4em]
+  \normalsize Do not pass GO. Do not collect €200.}
+
+\begin{frame}{References}
+  \small
+  \begin{itemize}
+    \item Ash, R.\,B. and Bishop, R.\,L. (1972). Monopoly as a Markov process.
+          \emph{Mathematics Magazine} 45(1), 26--29.
+    \item Stewart, I. (1996). How fair is Monopoly?
+          \emph{Scientific American} 274(4), 104--105.
+    \item R Core Team (\Sexpr{R.version$year}). \emph{R: A Language and Environment
+          for Statistical Computing}. R Foundation, Vienna.
+  \end{itemize}
+  \todo{add the R packages we use}
+\end{frame}

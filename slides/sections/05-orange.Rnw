@@ -1,0 +1,11 @@
+% Section 5 -- Is orange optimal?      Owner: Task 4 + Task 5                 ~3 min
+% Code: R/returns.R, analysis/tournament.R. Prefix chunk labels with "orange-".
+\boardsection{orange}{Is orange optimal?}
+
+\begin{frame}{Expected income per colour set}
+  \todo{rent per opponent turn and payback time per set, from $\pi$ (Task 5)}
+\end{frame}
+
+\begin{frame}{The tournament: is Vienna worth it?}
+  \todo{win rates with 95\% confidence intervals, orange vs.\ everyone (Task 4)}
+\end{frame}

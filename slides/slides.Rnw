@@ -1,0 +1,46 @@
+% Main slide file. Build with:  Rscript slides/build.R
+% (or open in RStudio and click "Compile PDF").
+%
+% Each section lives in its own file in sections/ -- edit only yours.
+% Theme commands (details in beamerthemepassgo.sty):
+%   \boardsection{orange}{Title}    start a section; frame titles take that colour
+%   \chancecard{...} \chestcard{...} full-slide card, e.g. as a section opener
+% Frames that show R code (echo=TRUE chunks) need \begin{frame}[fragile];
+% keep code lines under 60 characters.
+
+\documentclass[aspectratio=169, 11pt]{beamer}
+\usetheme{passgo}
+\newcommand{\todo}[1]{\textcolor{pg-red}{\textbf{TODO:} #1}}
+
+\title{Orange Is the New Black}
+\subtitle{Which Monopoly square do you land on most,\\ and should you buy Vienna?}
+\author[Group \todo{nr}]{\todo{our six names}}
+\institute{Computing, Prof.\ Kurt Hornik, WU Vienna}
+\date{24 November 2026}
+
+\begin{document}
+
+<<setup, echo=FALSE, results=tex>>=
+source(here::here("R", "board.R"))
+board <- load_board()
+cards <- load_cards(board)
+options(width = 60)  # R output that fits on a slide
+
+# Footline track: one colour per board square, straight from board.csv.
+track <- ifelse(board$type == "street", gsub("_", "", board$group),
+         ifelse(board$type %in% c("railroad", "utility"), board$type, "other"))
+cat("\\def\\boardtrack{", paste(track, collapse = ","), "}\n", sep = "")
+@
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\SweaveInput{sections/01-question.Rnw}
+\SweaveInput{sections/02-board.Rnw}
+\SweaveInput{sections/03-markov.Rnw}
+\SweaveInput{sections/04-simulation.Rnw}
+\SweaveInput{sections/05-orange.Rnw}
+\SweaveInput{sections/06-conclusion.Rnw}
+
+\end{document}

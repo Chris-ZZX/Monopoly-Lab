@@ -1,0 +1,49 @@
+% Section 4 -- Simulating full games   Owner: Task 3 + Task 4                 ~1.5 min
+% Code: R/game.R, R/strategies.R. Load saved results with
+% readRDS(here::here("results", ...)); never run long simulations in the slides.
+% Prefix chunk labels with "sim-".
+\boardsection{green}{Simulation}
+
+\chestcard{Bank error in your favour.\\[0.4em]
+  \normalsize Simulate 10\,000 games for free.}
+
+\begin{frame}{Monopoly lite: the rules we simulate}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{We keep}
+      \begin{itemize}
+        \item buying, rent, full-set double rent
+        \item houses and hotels
+        \item all 32 cards, jail
+        \item bankruptcy: last player standing wins
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{We drop}
+      \begin{itemize}
+        \item trading and auctions
+        \item mortgages
+        \item house shortage
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \vfill
+  \todo{confirm once the engine works (Task 3)}
+\end{frame}
+
+\begin{frame}{Meet the players}
+  \centering
+  \begin{tabular}{ll}
+    \toprule
+    Player & Strategy \\
+    \midrule
+    The Orange Fanatic & buys only Stockholm, Vienna, Lisbon; hotels ASAP \\
+    The Hoarder & buys everything it lands on \\
+    The Paris Snob & buys only Berlin and Paris \\
+    The Jet-Setter & buys only airports \\
+    Grandma & never buys anything, collects €200 and knits \\
+    \bottomrule
+  \end{tabular}
+  \vfill
+  \todo{final line-up (Task 4)}
+\end{frame}

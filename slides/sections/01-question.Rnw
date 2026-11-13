@@ -1,0 +1,17 @@
+% Section 1 -- The question            Owner: Task 6 (presentation lead)   ~1 min
+\boardsection{brown}{The question}
+
+\begin{frame}{Everybody has an uncle who swears by the orange set}
+  \begin{enumerate}
+    \item Which square do you land on most?
+          \hfill{\small\color{pg-muted} exact answer: a Markov chain}
+    \item Is buying the orange set really the best strategy?
+          \hfill{\small\color{pg-muted} answer: simulate full games}
+  \end{enumerate}
+  \vfill
+  On the 1999 Euro edition board, the orange set is
+  \Sexpr{paste(board$name[board$group %in% "orange"], collapse = ", ")}.
+  So the real question is: should you buy \textbf{Vienna}?
+  \vfill
+  {\small\color{pg-muted} No external data: two dice, \Sexpr{nrow(cards)} cards and the rulebook.}
+\end{frame}
