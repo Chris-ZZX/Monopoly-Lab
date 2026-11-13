@@ -14,14 +14,20 @@
 
 \title{Orange Is the New Black}
 \subtitle{Which Monopoly square do you land on most,\\ and should you buy Vienna?}
-\author[Group \todo{nr}]{\todo{our six names}}
+\author[Group 8]{Atharv Gudi, Zixin Zheng, Richard Takacs, Jakob Lutz,\\
+  Parker Joseph Edward Ellis, Nikola Meshkovski}
 \institute{Computing, Prof.\ Kurt Hornik, WU Vienna}
 \date{24 November 2026}
 
 \begin{document}
+\SweaveOpts{concordance=TRUE}
 
 <<setup, echo=FALSE, results=tex>>=
 source(here::here("R", "board.R"))
+source(here::here("R", "plots.R"))
+source(here::here("R", "markov.R"))
+source(here::here("R", "game.R"))
+source(here::here("R", "strategies.R"))
 board <- load_board()
 cards <- load_cards(board)
 options(width = 60)  # R output that fits on a slide

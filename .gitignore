@@ -8,6 +8,7 @@ Rplots.pdf
 slides/slides.tex
 slides/slides.pdf
 slides/slides-*.pdf
+slides/*-concordance.tex
 *.aux
 *.log
 *.nav

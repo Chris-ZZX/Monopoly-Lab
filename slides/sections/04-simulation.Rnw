@@ -1,4 +1,4 @@
-% Section 4 -- Simulating full games   Owner: Task 3 + Task 4                 ~1.5 min
+% Section 4 -- Simulating full games   Owner: Nikola (Tasks 3 + 4)           ~1.5 min
 % Code: R/game.R, R/strategies.R. Load saved results with
 % readRDS(here::here("results", ...)); never run long simulations in the slides.
 % Prefix chunk labels with "sim-".
@@ -13,37 +13,62 @@
       \textbf{We keep}
       \begin{itemize}
         \item buying, rent, full-set double rent
-        \item houses and hotels
-        \item all 32 cards, jail
-        \item bankruptcy: last player standing wins
+        \item airports and utilities by number owned
+        \item houses and hotels, built evenly
+        \item all \Sexpr{nrow(cards)} cards, doubles, jail
+        \item bankruptcy: cash and cities go to the creditor
       \end{itemize}
     \end{column}
     \begin{column}{0.48\textwidth}
       \textbf{We drop}
       \begin{itemize}
         \item trading and auctions
-        \item mortgages
+        \item mortgages (you sell houses at half price)
         \item house shortage
+      \end{itemize}
+      \medskip
+      \textbf{Game over}
+      \begin{itemize}
+        \item last player standing wins
+        \item after 300 rounds: richest net worth wins
       \end{itemize}
     \end{column}
   \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{One game in R}
+<<sim-one-game>>=
+set.seed(24)
+players <- personalities(board)
+res <- play_game(board, cards, players)
+res$name; res$rounds; res$ended
+@
   \vfill
-  \todo{confirm once the engine works (Task 3)}
+  {\small A player is a list: a \texttt{buy(game, me, pos)} function,
+   the cash it always keeps, and its jail habit.
+   \texttt{play\_game()} is \Sexpr{length(deparse(play_game))} lines;
+   the whole engine about \Sexpr{length(readLines(here::here("R", "game.R")))}.}
 \end{frame}
 
 \begin{frame}{Meet the players}
   \centering
-  \begin{tabular}{ll}
+  \begin{tabular}{lll}
     \toprule
-    Player & Strategy \\
+    Player & Buys & Keeps \\
     \midrule
-    The Orange Fanatic & buys only Stockholm, Vienna, Lisbon; hotels ASAP \\
-    The Hoarder & buys everything it lands on \\
-    The Paris Snob & buys only Berlin and Paris \\
-    The Jet-Setter & buys only airports \\
-    Grandma & never buys anything, collects €200 and knits \\
+<<sim-players, echo=FALSE, results=tex>>=
+buys <- c("Orange Fanatic" = "Stockholm, Vienna, Lisbon only",
+          "Hoarder"        = "everything it lands on",
+          "Paris Snob"     = "Berlin and Paris only",
+          "Jet-Setter"     = "the four airports only",
+          "Grandma"        = "nothing, collects €200 and knits")
+for (p in personalities(board)) {
+  cat(sprintf("%s & %s & €%d \\\\\n", p$name, buys[[p$name]], p$reserve))
+}
+@
     \bottomrule
   \end{tabular}
   \vfill
-  \todo{final line-up (Task 4)}
+  {\small Everyone builds houses on every full set as soon as the cash allows,
+  and pays to leave jail at once.}
 \end{frame}

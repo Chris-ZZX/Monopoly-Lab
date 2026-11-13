@@ -1,28 +1,146 @@
-% Section 3 -- Markov chain            Owner: Nikola (Task 1) + Task 2       ~2.5 min
-% Code: R/markov.R. Prefix chunk labels with "markov-".
+% Section 3 -- Markov chain            Owner: Nikola (Tasks 1 + 2)            ~2.5 min
+% Code: R/markov.R (exact), R/walk.R + analysis/walk.R (simulation check).
+% Prefix chunk labels with "markov-".
 \boardsection{darkblue}{Markov chain}
 
 \chancecard{Advance to the Markov chain.\\[0.4em]
   \normalsize If you pass GO, collect €200.}
 
+<<markov-setup, echo=FALSE>>=
+P_stay  <- transition_matrix(board, cards, "stay")
+P_pay   <- transition_matrix(board, cards, "pay")
+pi_stay <- stationary(P_stay)
+pi_pay  <- stationary(P_pay)
+walk    <- readRDS(here::here("results", "walk.rds"))
+
+jail_sq  <- board$pos[board$type == "jail"]
+in_jail  <- N_SQUARES + seq_len(N_JAIL_STATES)
+pct      <- function(x, d = 1) formatC(100 * x, format = "f", digits = d)
+
+# Squares that gain most from paying to leave jail at once.
+gain     <- (pi_pay - pi_stay)[seq_len(N_SQUARES)]
+gain[jail_sq] <- NA
+top_gain <- order(gain, decreasing = TRUE)[1:3]
+@
+
 \begin{frame}[fragile]{The board as a Markov chain}
+  \small
   \begin{itemize}
-    \item State: the square you stand on (+ jail states)
-    \item One step = one turn: dice, doubles, cards, Go To Jail
-    \item $P_{ij} = \Pr(\text{end turn on } j \mid \text{start on } i)$,
-          \ long run: $\pi = \pi P$, \ $\sum_i \pi_i = 1$
+    \item State $X_t$: \Sexpr{N_SQUARES} squares (\Sexpr{jail_sq} = Just Visiting)
+          + \emph{In Jail} before attempt 1, 2, 3 = \Sexpr{N_STATES} states
+    \item One roll: matrices $N$ (no doubles), $D$ (doubles), after cards and Go To Jail
+    \item One turn = up to three rolls:
+          $P = N + D\bigl(E + N + D\,(E + N + \tfrac16 J)\bigr)$
+          \\ {\small\color{pg-muted} $J$: third double, straight to jail;
+          $E$: sent to jail mid-turn, stay there}
+    \item Long run: \ $\pi P = \pi$, \ $\sum_i \pi_i = 1$
   \end{itemize}
-  \medskip
-<<markov-dice>>=
-sums <- outer(1:6, 1:6, "+")  # all 36 rolls of two dice
-table(sums)
+<<markov-pi>>=
+P  <- transition_matrix(board, cards)  # 43 x 43
+pi <- stationary(P)                    # solves pi P = pi
+round(100 * sort(pi, decreasing = TRUE)[1:4], 2)
+@
+<<markov-cleanup, echo=FALSE>>=
+rm(pi, P)   # keep base::pi intact for later sections
 @
 \end{frame}
 
-\begin{frame}{Where do you land most?}
-  \todo{$\pi$ as a heatmap on the board, top 5 squares (Tasks 1 + 6)}
+<<markov-heat, echo=FALSE, results=tex>>=
+# Heatmap of pi on the board: share of turns that end on each square.
+sq_pi <- pi_stay[seq_len(N_SQUARES)]
+side  <- !(board$type %in% c("go", "jail", "parking", "go_to_jail"))
+heat  <- round(70 * (sq_pi - min(sq_pi[side])) / diff(range(sq_pi[side])))
+fill  <- ifelse(side, paste0("pg-red!", pmax(heat, 0)), "white")
+cat("\\newcommand{\\markovheatboard}{\n",
+    paste(board_tikz(board, fill = fill, values = pct(sq_pi, 2)), collapse = "\n"),
+    "}\n", sep = "")
+
+# Top squares, with all jail states together.
+top <- c("In Jail" = sum(pi_stay[in_jail]), sq_pi)
+top <- sort(top, decreasing = TRUE)[1:6]
+names(top) <- ifelse(names(top) %in% names(SHORT_NAMES), SHORT_NAMES[names(top)], names(top))
+cat("\\newcommand{\\markovtop}{",
+    paste0(names(top), " & ", pct(top, 2), "\\,\\% \\\\", collapse = "\n"),
+    "}\n", sep = "")
+orange <- board$pos[board$group %in% "orange"]
+streets <- board$type == "street"
+rank_street <- rank(-sq_pi[streets])[match(orange, board$pos[streets])]
+cat(sprintf("\\def\\markovorangerank{%s}\n",
+            paste0(board$name[orange], " \\#", rank_street, collapse = ", ")))
+@
+
+\begin{frame}
+  \vspace*{-0.2cm}\centering
+  \begin{tikzpicture}
+    \markovheatboard
+    \node[anchor=north, font=\robotoslab\bfseries\Large, text=pg-ink]
+      at ([yshift=-0.2cm]inner.north) {Where do you land most?};
+    \node[anchor=north, font=\small, text=pg-muted]
+      at ([yshift=-0.95cm]inner.north)
+      {$\pi_i$ = share of turns that end on square $i$, in \%};
+    \node[anchor=north west, font=\small, text=pg-ink]
+      at ([shift={(0.4cm,-1.55cm)}]inner.north west)
+      {\begin{tabular}{@{}l@{\quad}r@{}} \markovtop \end{tabular}};
+    \node[anchor=north west, font=\small, text=pg-ink, text width=5.6cm, align=flush left]
+      at ([shift={(5.7cm,-1.6cm)}]inner.north west)
+      {Fair board: every square $1/\Sexpr{N_SQUARES} = \Sexpr{100 / N_SQUARES}\,\%$.\\[0.6ex]
+       Go To Jail: $0\,\%$, nobody ends a turn there.\\[0.6ex]
+       Among the \Sexpr{sum(streets)} capitals: \markovorangerank.};
+  \end{tikzpicture}
 \end{frame}
 
 \begin{frame}{Check: theory vs.\ simulation}
-  \todo{simulated landing frequencies converge to $\pi$; jail strategy effect (Task 2)}
+  \begin{columns}[c]
+    \begin{column}{0.56\textwidth}
+\setkeys{Gin}{width=\linewidth}
+<<markov-conv, fig=TRUE, echo=FALSE, width=4.6, height=3.3>>=
+plot_convergence(walk, "stay")
+@
+    \end{column}
+    \begin{column}{0.42\textwidth}
+      \small
+      Roll real dice, draw real cards: $10^{\Sexpr{log10(walk$n_turns)}}$
+      turns, \Sexpr{ncol(walk$stay$tv)} runs. No matrices involved.
+      \medskip
+
+      Distance to $\pi$: \ $\tfrac12 \sum_i |\hat\pi_i - \pi_i|$
+      \medskip
+
+      After $10^{\Sexpr{log10(walk$n_turns)}}$ turns:
+      \Sexpr{formatC(mean(walk$stay$tv[length(walk$checkpoints), ]), format = "f", digits = 4)}.
+      \medskip
+
+      It shrinks like $1/\sqrt{n}$: 100 times more turns, 10 times closer.
+      The chain is right.
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Jail: stay or pay?}
+  \begin{columns}[c]
+    \begin{column}{0.56\textwidth}
+\setkeys{Gin}{width=\linewidth}
+<<markov-jail, fig=TRUE, echo=FALSE, width=4.6, height=3.3>>=
+plot_jail_shift(board, pi_stay, pi_pay)
+@
+    \end{column}
+    \begin{column}{0.42\textwidth}
+      \small
+      \textbf{Stay}: try for doubles up to 3 turns.\\
+      \textbf{Pay}: pay €\Sexpr{RULES$jail_fine} and leave at once.
+      \medskip
+
+      Turns spent in jail:
+      \Sexpr{pct(sum(pi_stay[in_jail]))}\,\% $\to$
+      \Sexpr{pct(sum(pi_pay[in_jail]))}\,\%.
+      \medskip
+
+      Paying keeps you moving, so almost every square gains. Most:
+      \Sexpr{paste0(board$name[top_gain], " (+", (top_gain - jail_sq) %% N_SQUARES, ")", collapse = ", ")}
+      squares after jail.
+      \medskip
+
+      {\color{pg-muted} Bars: change in $\pi$, pay minus stay, in percentage points.}
+    \end{column}
+  \end{columns}
 \end{frame}

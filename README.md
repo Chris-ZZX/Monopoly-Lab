@@ -29,6 +29,7 @@ board[board$group %in% "orange", ]
 |---|---|
 | Run the tests | `Rscript -e 'testthat::test_dir(here::here("tests"))'` |
 | Build the slides | `Rscript slides/build.R` → `slides/slides.pdf` (or **Compile PDF** in RStudio) |
+| Check the slides' maths | read `slides/NOTES.md`, one section per slide |
 
 ## What is where
 
@@ -43,7 +44,12 @@ slides/slides.Rnw  main Beamer file; each section lives in slides/sections/
 slides/beamerthemepassgo.sty   our Beamer theme (title deed, board footline, cards)
 ```
 
-`analysis/` and `results/` don't exist yet. Create them when your task needs them.
+Rerun the long simulations (about 1.5 minutes each) only when the model changes:
+
+```sh
+Rscript analysis/walk.R         # Task 2 -> results/walk.rds
+Rscript analysis/tournament.R   # Task 4 -> results/tournament.rds
+```
 
 ## Conventions
 

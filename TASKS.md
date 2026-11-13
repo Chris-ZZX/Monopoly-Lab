@@ -7,10 +7,10 @@ Pick an open task, put your name in the table and push the change. Each task own
 | # | Task | Owner | Code | Slides |
 |---|---|---|---|---|
 | 0 | Board setup | Nikola (done) | `data/`, `R/board.R` | `02-board` |
-| 1 | Markov chain and stationary distribution | Nikola | `R/markov.R` | `03-markov` |
-| 2 | Check the chain by simulation, plus jail strategy | *open* | `R/walk.R` | `03-markov` |
-| 3 | Game engine: "Monopoly lite" | *open* | `R/game.R` | `04-simulation` |
-| 4 | Player personalities and tournament | *open* | `R/strategies.R` | `04-simulation`, `05-orange` |
+| 1 | Markov chain and stationary distribution | Nikola (done) | `R/markov.R` | `03-markov` |
+| 2 | Check the chain by simulation, plus jail strategy | Nikola (done) | `R/walk.R` | `03-markov` |
+| 3 | Game engine: "Monopoly lite" | Nikola (done) | `R/game.R` | `04-simulation` |
+| 4 | Player personalities and tournament | Nikola (done) | `R/strategies.R` | `04-simulation`, `05-orange` |
 | 5 | Expected income and payback per colour set | *open* | `R/returns.R` | `05-orange` |
 | 6 | Board heatmap, story and presentation lead | *open* | `R/plots.R` | `01`, `06`, overall |
 
@@ -19,7 +19,7 @@ board (0) ──> Markov chain (1) ──> sim check (2), income (5), board heat
           └─> game engine (3) ──> tournament (4)
 ```
 
-Nobody has to wait. Tasks 2, 5 and 6 can use `rep(1/40, 40)` as a stand-in for π until Task 1 is merged. Task 4 can write the personalities against a stub until Task 3 is merged.
+Tasks 1–4 are done. For Task 5, `landing_probs(board, cards)` gives π (share of turns that *end* on each square) and `landings_per_turn(board, cards)` the expected number of *landings* per turn, which also counts the stops in between doubles. Rent depends on landings, so use the second. For Task 6, `board_tikz(board, fill = ..., values = ...)` in `R/plots.R` already draws a heatmap; see `slides/sections/03-markov.Rnw`.
 
 ## 1. Markov chain (Nikola)
 
