@@ -12,7 +12,7 @@
 \usetheme{passgo}
 \newcommand{\todo}[1]{\textcolor{pg-red}{\textbf{TODO:} #1}}
 
-\title{Orange Is the New Black}
+\title{Your Uncle Is Half Right: Monopoly Edition}
 \subtitle{Which Monopoly square do you land on most,\\ and should you buy Vienna?}
 \author[Group 8]{Nikola Meshkovski, Atharv Gudi, Zixin Zheng,\\
   Richard Takacs, Jakob Lutz, Parker Joseph Edward Ellis}
