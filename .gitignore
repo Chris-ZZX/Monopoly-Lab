@@ -26,4 +26,4 @@ slides/Sweave.sty
 .claude/settings.local.json
 
 # Previous years slides
-previous-years-slides/
+previous-years-slides/slides/sections/*.tex
