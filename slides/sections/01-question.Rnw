@@ -126,7 +126,7 @@ cat(sprintf("\\def\\pg%s{%s}\n", names(defs), defs), sep = "")
   \foreach \d in \pgchancedest
     \draw[pg-orange, line width=0.9pt, -{Latex[length=2mm]}]
       (sq\pglanded.north) .. controls +(0,2.2) .. (sq\d);
-  \node[pg caption, text width=11.3cm, fill=pg-paper, fill opacity=0.8,
+  \node[pg caption, text width=11.3cm, fill=none, fill opacity=0.8,
         text opacity=1, inner sep=4pt]
     at ([yshift=0.75cm]inner.center)
     {\pgnmovers{} of the \pgncards{} cards move you; on Chance,
