@@ -1,5 +1,4 @@
-# Run all tests from anywhere in the repo:
-#   Rscript -e 'testthat::test_dir(here::here("tests"))'
+# run all tests: Rscript -e 'testthat::test_dir(here::here("tests"))'
 
 source(here::here("R", "board.R"))
 board <- load_board()

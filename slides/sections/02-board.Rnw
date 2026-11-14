@@ -1,6 +1,4 @@
-% Section 2 -- The board as data       Owner: Nikola (board setup)          ~0.5 min
-% Uses `board` and `cards` from slides.Rnw. Prefix chunk labels with "board-".
-% One frame: the eight colour sets, which the tournaments refer back to.
+% The colour sets (we need them later for the tournaments).
 \boardsection{pink}{The board}
 
 \begin{frame}{The board in R: \Sexpr{sum(board$type == "street")} capitals in

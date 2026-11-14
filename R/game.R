@@ -1,29 +1,18 @@
-# R/game.R -- "Monopoly lite": one full game with money (Task 3).
+# "Monopoly lite": a full game with money.
+# We keep buying, rent, houses/hotels, all cards, jail and bankruptcy.
+# No trading, auctions or mortgages, and no limit on houses. Last player left
+# wins, or the richest one after max_rounds.
 #
-# KEPT   buying, rent (double rent on an unimproved full set, airports,
-#        utilities), houses and hotels, all 32 cards, jail, bankruptcy.
-#        The last player standing wins; at the round cap the richest wins.
-# DROPPED  trading, auctions, mortgages, the house shortage.
+# Cards are random draws like in the Markov chain. If you can't pay, you sell
+# houses at half price first, and if that's not enough you're bankrupt and
+# everything goes to whoever you owe (or the bank).
 #
-# SIMPLIFICATIONS
-#   * Cards are fresh random draws, as in the Markov chain. A Get Out of Jail
-#     Free card is kept and used the next time the player is in jail.
-#   * Players who cannot pay first sell houses back to the bank at half price.
-#     If that is not enough, they are bankrupt: their cash and properties go
-#     to the creditor (or back to the bank if they owe the bank).
-#
-# PLAYERS are lists made by make_player() in R/strategies.R:
-#   name     label for results
-#   buy      function(game, me, pos): TRUE to buy the unowned square `pos`
-#   reserve  cash the player always keeps when buying or building
-#   jail     "pay" (leave at once) or "stay" (try for doubles)
-#
-# Usage:
-#   set.seed(1)
-#   res <- play_game(board, cards, list(player_a, player_b), max_rounds = 300)
-#   res$winner
+# Players come from make_player() in strategies.R:
+#   buy      function(game, me, pos), TRUE = buy this square
+#   reserve  cash they never spend on buying/building
+#   jail     "pay" or "stay"
 
-# Facts about the board that the game looks up again and again.
+# Board info we need all the time, precomputed once.
 game_info <- function(board) {
   street <- board$type == "street"
   list(
@@ -65,12 +54,10 @@ net_worth <- function(g, info, p) {
 
 # ---- Money -------------------------------------------------------------------
 
-# Player p pays `amount` to player `to` (0 = the bank). Sells houses if needed;
-# goes bankrupt if even that is not enough.
+# p pays `amount` to `to` (0 = bank), selling houses or going bankrupt if needed.
 pay <- function(g, info, p, to, amount) {
   if (amount <= 0 || !g$alive[p]) return(g)
-  # Sell houses at half price, always from the most built-up street, so the
-  # sets stay evenly built.
+  # sell from the most built-up street first so sets stay even
   while (g$cash[p] < amount && any(g$houses[g$owner == p] > 0)) {
     mine <- which(g$owner == p & g$houses > 0)
     s <- mine[which.max(g$houses[mine])]
@@ -90,8 +77,8 @@ pay <- function(g, info, p, to, amount) {
   g
 }
 
-# Rent for landing on the owned square `pos`. `card` is "railroad" or
-# "utility" when an advance-to-nearest card sent the player there.
+# Rent on square pos. card = "railroad"/"utility" if an "advance to nearest"
+# card brought you here (those cards change the rent).
 rent <- function(g, info, pos, dice_total, card = "") {
   o <- g$owner[pos]
   switch(info$type[pos],
@@ -106,7 +93,7 @@ rent <- function(g, info, pos, dice_total, card = "") {
     },
     utility = {
       n <- sum(g$owner[info$utilities] == o)
-      if (card == "utility") {   # the card says: roll again, pay 10 times
+      if (card == "utility") {   # card: roll again and pay 10x
         max(RULES$utility_multiplier) * sum(sample.int(6, 2, replace = TRUE))
       } else {
         RULES$utility_multiplier[n] * dice_total
@@ -122,14 +109,14 @@ send_to_jail <- function(g, info, p) {
   g
 }
 
-# Move player p forward to square `to`, collecting the GO salary if passing GO.
+# Move forward to `to`, collect 200 when passing GO.
 advance_to <- function(g, p, to) {
   if (to <= g$pos[p]) g$cash[p] <- g$cash[p] + RULES$go_salary
   g$pos[p] <- to
   g
 }
 
-# Everything that happens after player p lands on square `pos`.
+# What happens when p lands on a square.
 land <- function(g, info, board, cards, players, p, dice_total, card = "") {
   pos <- g$pos[p]
   switch(info$type[pos],
@@ -186,12 +173,12 @@ draw_card <- function(g, info, board, cards, players, p, dice_total) {
 
 # ---- Building ----------------------------------------------------------------
 
-# Build houses evenly on every full set player p owns, keeping `reserve`.
+# Build evenly on all full sets, as long as the reserve allows.
 build <- function(g, info, p, reserve) {
   repeat {
     sets <- Filter(function(m) all(g$owner[m] == p), info$members)
     if (length(sets) == 0) return(g)
-    # Even building: only the least built-up streets of each set qualify.
+    # only the least built-up streets of each set can get the next house
     cand <- unlist(lapply(sets, function(m) m[g$houses[m] == min(g$houses[m]) & g$houses[m] < 5]))
     cand <- cand[g$cash[p] - info$house[cand] >= reserve]
     if (length(cand) == 0) return(g)
@@ -239,10 +226,8 @@ take_turn <- function(g, info, board, cards, players, p) {
   }
 }
 
-# Play one game. Players move in list order. Returns the winner's index and
-# name, the number of rounds, how the game ended, everyone's net worth and
-# `first_set`: for each colour set, the player who first owned all of it
-# (NA if nobody did) and in which round.
+# Play one game, players move in list order. Returns the winner, number of
+# rounds, how it ended, net worths and who completed each set first.
 play_game <- function(board, cards, players, max_rounds = 300) {
   info <- game_info(board)
   g    <- new_game(board, players)
@@ -263,7 +248,7 @@ play_game <- function(board, cards, players, max_rounds = 300) {
   }
   worth <- vapply(seq_along(players), function(p) net_worth(g, info, p), numeric(1))
   worth[!g$alive] <- 0
-  # After a bankruptcy finish the survivor wins, even with nothing left.
+  # last one standing wins even if broke
   winner <- if (ended == "bankruptcy") which(g$alive) else which.max(worth)
   names_ <- vapply(players, `[[`, "", "name")
   list(winner = winner, name = players[[winner]]$name, rounds = round,

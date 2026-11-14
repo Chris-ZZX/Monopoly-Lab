@@ -1,17 +1,9 @@
-# R/walk.R -- check the Markov chain by simulation (Task 2).
+# Simulation check of the Markov chain: move one token around with random
+# dice and cards (no money) and compare the share of turns in each state with
+# pi. Doesn't use anything from markov.R, so it's an independent check.
+# States are numbered like in markov.R.
 #
-# simulate_walk() rolls real dice and draws real cards for one token, turn by
-# turn, with no money involved. It does not use any matrix from R/markov.R,
-# so it is an independent check: if both are right, the share of turns spent
-# in each state converges to the stationary distribution pi.
-#
-# States are numbered as in R/markov.R: 1..40 squares (11 = Just Visiting),
-# 41..43 in jail before attempt 1, 2, 3.
-#
-# Usage:
-#   set.seed(1)
-#   states <- simulate_walk(board, cards, n_turns = 1e5, jail = "stay")
-#   empirical <- tabulate(states, nbins = N_STATES) / length(states)
+#   states <- simulate_walk(board, cards, n_turns = 1e5)
 
 simulate_walk <- function(board, cards, n_turns, jail = c("stay", "pay"),
                           start = 1L) {
@@ -20,17 +12,16 @@ simulate_walk <- function(board, cards, n_turns, jail = c("stay", "pay"),
   jail_in  <- N_SQUARES + 1L
   last_try <- N_SQUARES + RULES$max_jail_turns
   type     <- board$type
-  decks    <- lapply(split(cards, cards$deck), as.list)   # columns as vectors
+  decks    <- lapply(split(cards, cards$deck), as.list)
 
   roll <- function() sample.int(6, 2, replace = TRUE)
 
-  # Square effects after landing on `pos`: Go To Jail and cards.
-  # Returns the final state (a square, or jail_in).
+  # apply Go To Jail / cards after landing on pos
   resolve <- function(pos) {
     if (type[pos] == "go_to_jail") return(jail_in)
     if (type[pos] %in% c("chance", "chest")) {
       deck <- decks[[type[pos]]]
-      k    <- sample.int(length(deck$action), 1)   # a fresh random draw
+      k    <- sample.int(length(deck$action), 1)
       new <- switch(deck$action[k],
                     advance         = deck$target_pos[k],
                     advance_nearest = nearest(pos, deck$target[k], board),
@@ -48,10 +39,10 @@ simulate_walk <- function(board, cards, n_turns, jail = c("stay", "pay"),
   for (t in seq_len(n_turns)) {
     if (state > N_SQUARES) {                      # in jail
       if (jail == "pay") {
-        state <- jail_sq                          # pay, then a normal turn
+        state <- jail_sq                          # pay and play normally
       } else {
         d <- roll()
-        if (d[1] == d[2] || state == last_try) {  # doubles, or pay on last try
+        if (d[1] == d[2] || state == last_try) {  # doubles or 3rd try
           state <- resolve(move(jail_sq, sum(d)))
         } else {
           state <- state + 1L
@@ -62,7 +53,7 @@ simulate_walk <- function(board, cards, n_turns, jail = c("stay", "pay"),
     }
 
     n_doubles <- 0
-    repeat {                                      # a normal turn
+    repeat {
       d <- roll()
       if (d[1] == d[2]) n_doubles <- n_doubles + 1
       if (n_doubles == RULES$doubles_to_jail) { state <- jail_in; break }
@@ -74,12 +65,10 @@ simulate_walk <- function(board, cards, n_turns, jail = c("stay", "pay"),
   out
 }
 
-# Total variation distance between two distributions: the largest possible
-# difference in probability that p and q give to the same event.
+# Total variation distance.
 tv_distance <- function(p, q) sum(abs(p - q)) / 2
 
-# Distance between the empirical distribution of the first n turns of `states`
-# and `pi`, for each n in `checkpoints`.
+# TV distance to pi after the first n turns, for each n in checkpoints.
 convergence <- function(states, pi, checkpoints) {
   vapply(checkpoints, function(n) {
     tv_distance(tabulate(states[seq_len(n)], nbins = length(pi)) / n, pi)

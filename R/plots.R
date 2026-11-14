@@ -1,21 +1,11 @@
-# R/plots.R -- pictures of the board for the slides.
+# Board pictures and plots for the slides.
 #
-# board_tikz() draws the board as TikZ code, straight from board.csv, so the
-# picture always matches our data and uses the slide fonts and colours.
-# Use it in a Sweave chunk with results=tex inside a tikzpicture:
-#
-#   \begin{tikzpicture}
-#   <<intro-board, echo=FALSE, results=tex>>=
-#   cat(board_tikz(board), sep = "\n")
-#   @
-#   \end{tikzpicture}
-#
-# Every square becomes a TikZ node named sq<pos> (sq1 = GO, sq11 = Jail, ...),
-# and the empty middle of the board is the node `inner`. Slides draw arrows,
-# highlights and text on top of these, for example
-#   \draw[->] (sq31) -- (sq11);
+# board_tikz() writes the board as TikZ code from board.csv, so we can cat()
+# it into a tikzpicture in a results=tex chunk. Each square is a node sq<pos>
+# and the middle of the board is the node `inner`, so the slides can draw
+# arrows on top, e.g. \draw[->] (sq31) -- (sq11);
 
-# Long names that do not fit in a square.
+# names that are too long for a square
 SHORT_NAMES <- c("Amsterdam Schiphol"        = "Schiphol Airport",
                  "Frankfurt Rhein-Main"      = "Frankfurt Airport",
                  "Paris Charles de Gaulle"   = "Paris CDG Airport",
@@ -23,7 +13,7 @@ SHORT_NAMES <- c("Amsterdam Schiphol"        = "Schiphol Airport",
                  "European Parliament"       = "EU Parliament",
                  "European Court of Justice" = "EU Court of Justice")
 
-# TikZ styles shared by the board pictures.
+# TikZ styles used by both board pictures
 TIKZ_STYLES <- c(
   "\\tikzset{",
   "  pg cell/.style={draw=pg-ink, line width=0.4pt, inner sep=0pt, fill=white},",
@@ -32,11 +22,9 @@ TIKZ_STYLES <- c(
   "  pg glyph/.style={inner sep=0pt, font=\\robotoslab\\bfseries\\fontsize{13}{13}\\selectfont}",
   "}")
 
-# TikZ code for the whole board: a colour band and the name on each square.
-#   width, height, corner  sizes in cm. The board may be wider than tall to
-#                          fill a 16:9 slide; corners are corner x corner.
-#   fill    optional, 40 TikZ colours for the squares' background (a heatmap)
-#   values  optional, 40 strings printed in bold under the names
+# The whole board as TikZ. Sizes in cm (wider than tall to fill a 16:9
+# slide). fill = optional background colour per square (for the heatmap),
+# values = optional text printed under each name.
 board_tikz <- function(board, width = 14, height = 7.7, corner = 1.15,
                        fill = NULL, values = NULL) {
   stopifnot(nrow(board) == N_SQUARES, N_SQUARES %% 4 == 0,
@@ -60,7 +48,7 @@ board_tikz <- function(board, width = 14, height = 7.7, corner = 1.15,
     side <- (pos - 1) %/% (per_side + 1)        # 0 bottom, 1 left, 2 top, 3 right
     j    <- (pos - 1) %%  (per_side + 1)        # 0 = corner, 1..9 along the side
 
-    # Rectangle of the square; the board runs anticlockwise from GO (bottom right).
+    # GO is bottom right, the board goes anticlockwise
     if (j == 0) {
       x0 <- c(width - corner, 0, 0, width - corner)[side + 1]
       y0 <- c(0, 0, height - corner, height - corner)[side + 1]
@@ -87,14 +75,14 @@ board_tikz <- function(board, width = 14, height = 7.7, corner = 1.15,
       next
     }
 
-    # Colour of the square's band (streets, airports, utilities).
+    # colour band (streets, airports, utilities)
     colour <- switch(sq$type,
                      street   = paste0("pg-", gsub("_", "", sq$group)),
                      railroad = "pg-railroad",
                      utility  = "pg-utility",
                      NA)
 
-    # The band sits on the inner edge of the square, facing the middle.
+    # band goes on the side facing the middle of the board
     tx0 <- x0; tx1 <- x1; ty0 <- y0; ty1 <- y1      # area left for text
     if (side == 0)      { bx <- c(x0, x1); by <- c(y1 - band, y1); ty1 <- y1 - band }
     else if (side == 1) { bx <- c(x1 - band, x1); by <- c(y0, y1); tx1 <- x1 - band }
@@ -108,7 +96,7 @@ board_tikz <- function(board, width = 14, height = 7.7, corner = 1.15,
                             pos, pos))
     }
 
-    # Text and symbols inside the square.
+    # text / symbols
     cx <- (tx0 + tx1) / 2
     cy <- (ty0 + ty1) / 2
     text_w <- tx1 - tx0 - 0.1
@@ -116,7 +104,7 @@ board_tikz <- function(board, width = 14, height = 7.7, corner = 1.15,
     if (sq$type %in% c("chance", "chest") && is.null(values)) {
       glyph  <- if (sq$type == "chance") "?" else "\\texteuro"
       gcol   <- if (sq$type == "chance") "pg-orange" else "pg-lightblue!80!pg-darkblue"
-      # Side squares are short: put the glyph next to the label, not above it.
+      # side squares are too short for symbol + label, so only the symbol
       if (side %in% c(1, 3)) {
         out <- c(out, sprintf("\\node[pg glyph, text=%s] at (%.3f,%.3f) {%s};",
                               gcol, (x0 + x1) / 2, (y0 + y1) / 2, glyph))
@@ -133,7 +121,7 @@ board_tikz <- function(board, width = 14, height = 7.7, corner = 1.15,
     name <- latex_escape(ifelse(sq$name %in% names(SHORT_NAMES),
                                 SHORT_NAMES[sq$name], sq$name))
     if (sq$type == "chest" && side %in% c(1, 3)) name <- "Chest"
-    # Long single words do not fit the narrow side squares: use a smaller font.
+    # long single words don't fit on the side squares
     if (side %in% c(1, 3) && nchar(name) >= 9 && !grepl(" ", name))
       name <- paste0("{\\fontsize{4.3}{5}\\selectfont ", name, "}")
     out <- c(out, sprintf("\\node[pg text, text width=%.3fcm] at (%.3f,%.3f) {%s%s};",
@@ -144,7 +132,7 @@ board_tikz <- function(board, width = 14, height = 7.7, corner = 1.15,
          sprintf("  (%.3f,%.3f);", width, height))
 }
 
-# The four corner squares: GO, Jail, Free Parking, Go To Jail.
+# Corners: GO, Jail, Free Parking, Go To Jail.
 corner_tikz <- function(sq, x0, y0, size) {
   cx <- x0 + size / 2
   cy <- y0 + size / 2
@@ -177,12 +165,10 @@ corner_tikz <- function(sq, x0, y0, size) {
     stop("unknown corner type: ", sq$type))
 }
 
-# TikZ code for the way out of Jail: the Jail corner, the `n` squares after it
-# in a row, and above each square a bar with the number of the 36 dice rolls
-# whose total reaches it. Squares of colour set `highlight` get an orange ring
-# and orange bars. Sizes in cm; (x0, y0) is the bottom left of the first square
-# after Jail. Nodes: `exjail` for Jail, `ex1`..`exn` for the squares,
-# `bar1`..`barn` for the bar tops (k = steps after Jail).
+# Jail slide: the Jail corner and the n squares after it, with a bar above
+# each square showing how many of the 36 dice rolls get there. The highlight
+# set (orange) gets coloured. Nodes: exjail, ex1..exn, and bar1..barn for
+# the bar tops. Sizes in cm.
 jail_exit_tikz <- function(board, n = 12, x0 = 2.4, y0 = 0.5, cell = 0.95,
                            cell_h = 1.15, corner = 2.0, bar_unit = 0.22,
                            highlight = "orange") {
@@ -190,9 +176,9 @@ jail_exit_tikz <- function(board, n = 12, x0 = 2.4, y0 = 0.5, cell = 0.95,
   ways  <- tabulate(outer(1:6, 1:6, "+"), nbins = n)   # ways[k]: rolls with total k
   band  <- 0.2
   big   <- "font=\\robotoslab\\bfseries\\fontsize{%s}{%s}\\selectfont"
-  bar0  <- y0 + cell_h + 0.15                          # base line of the bars
+  bar0  <- y0 + cell_h + 0.15                          # bars start here
 
-  # The Jail corner, drawn like the board's corner but larger.
+  # Jail corner, like on the board but bigger
   cx0 <- x0 - corner
   out <- c(
     TIKZ_STYLES,
@@ -253,7 +239,7 @@ jail_exit_tikz <- function(board, n = 12, x0 = 2.4, y0 = 0.5, cell = 0.95,
                  x0, bar0, x0 + n * cell, bar0))
 }
 
-# A plain corner for heatmaps: its name and the value, no pictures.
+# Corner for the heatmap: just name and value.
 corner_value_tikz <- function(sq, x0, y0, size, value) {
   label <- switch(sq$type, go = "GO", jail = "Just\\\\Visiting",
                   parking = "Free\\\\Parking", go_to_jail = "Go To\\\\Jail",
@@ -266,8 +252,7 @@ latex_escape <- function(x) {
   gsub("([&%$#_])", "\\\\\\1", x)
 }
 
-# ---- Plots for the slides (base R) ------------------------------------------
-# Transparent background, so the slide paper shows through.
+# ---- Plots (base R) ----------------------------------------------------------
 
 PLOT_INK   <- "#1E2430"
 PLOT_MUTED <- "#7A7468"
@@ -277,7 +262,7 @@ plot_style <- function(mar = c(3.2, 3.6, 0.6, 0.6)) {
       col.axis = PLOT_MUTED, col.lab = PLOT_INK, fg = PLOT_MUTED, cex.axis = 0.8)
 }
 
-# Plot colour of every square: its colour set, dark for airports, grey otherwise.
+# colour per square: set colour, dark for airports, grey for the rest
 square_colours <- function(board) {
   col <- rep("#C9C2B2", N_SQUARES)
   street <- board$type == "street"
@@ -287,8 +272,7 @@ square_colours <- function(board) {
   col
 }
 
-# Total variation distance to pi against the number of simulated turns,
-# one line per run, with the 1/sqrt(n) rate for reference.
+# TV distance vs. number of simulated turns, one line per run, plus 1/sqrt(n).
 plot_convergence <- function(walk, jail = "stay") {
   n  <- walk$checkpoints
   tv <- walk[[jail]]$tv
@@ -304,8 +288,8 @@ plot_convergence <- function(walk, jail = "stay") {
        col = GROUP_COLOURS[["orange"]], cex = 0.9)
 }
 
-# Change in pi (percentage points) per square when you pay to leave jail at
-# once instead of staying. The jail square itself is left out (shown in text).
+# Change in pi per square (pp) if you pay to leave jail instead of staying.
+# Jail itself is left out, it's on the slide as text.
 plot_jail_shift <- function(board, pi_stay, pi_pay) {
   plot_style(mar = c(3.2, 3.6, 0.6, 0.2))
   d <- 100 * (pi_pay[seq_len(N_SQUARES)] - pi_stay[seq_len(N_SQUARES)])
@@ -318,7 +302,7 @@ plot_jail_shift <- function(board, pi_stay, pi_pay) {
   abline(h = 0, col = PLOT_MUTED)
 }
 
-# Win rates with 95% confidence intervals, best on top.
+# Win rates with 95% CIs, best on top.
 plot_win_rates <- function(rates, colours, chance_level = NULL) {
   rates <- rates[order(rates$rate), ]
   plot_style(mar = c(3.2, 8.5, 0.6, 1))
@@ -333,11 +317,8 @@ plot_win_rates <- function(rates, colours, chance_level = NULL) {
   if (!is.null(chance_level)) abline(v = 100 * chance_level, lty = 2, col = PLOT_MUTED)
 }
 
-# The 43 x 43 transition matrix as a heatmap: row i (top to bottom) is the
-# state a turn starts in, column j the state it ends in. Probabilities are
-# binned into a few classes, so that both the dice band (around 1/6) and the
-# rare card jumps (under 1 %) stay visible. The jail states sit behind a
-# dashed line.
+# Heatmap of P (rows = from, columns = to). We bin the probabilities,
+# otherwise the small card jumps disappear next to the dice band.
 P_BREAKS  <- c(0, 0.01, 0.05, 0.10, 1)
 P_COLOURS <- c("#E3EDF6", "#9CC5E6", "#0072BB", "#1E2430")   # light to dark
 P_LABELS  <- c("under 1 %", "1 to 5 %", "5 to 10 %", "over 10 %")
@@ -348,12 +329,12 @@ plot_transition_matrix <- function(P, board, legend = TRUE) {
   cls[P == 0] <- NA
   z <- matrix(cls, n, n)
   plot_style(mar = c(2.4, 2.6, 0.3, if (legend) 6 else 0.3))
-  # image() puts z[i, j] at x = i, y = j: transpose and flip so row 1 is on top.
+  # image() draws z[i, j] at (i, j), so transpose and flip to get row 1 on top
   image(seq_len(n), seq_len(n), t(z)[, n:1], col = P_COLOURS,
         breaks = seq(0.5, length(P_COLOURS) + 0.5), axes = FALSE,
         xlab = "", ylab = "", asp = 1)
   rect(0.5, 0.5, n + 0.5, n + 0.5, border = PLOT_MUTED, lwd = 0.6)
-  # Labels at the corners of the board and at the jail states.
+  # label the corners and the jail states
   corners <- board$pos[board$type %in% c("go", "jail", "parking", "go_to_jail")]
   at  <- c(corners, N_SQUARES + 2)
   lab <- c(corners, "Jail")
@@ -362,7 +343,7 @@ plot_transition_matrix <- function(P, board, legend = TRUE) {
   mtext(expression("to state " * italic(j)), side = 1, line = 1.5, cex = 0.8, col = PLOT_INK)
   mtext(expression("from state " * italic(i)), side = 2, line = 1.4, cex = 0.8,
         col = PLOT_INK, las = 0)
-  # Dashed lines between the 40 squares and the jail states.
+  # separate the jail states
   segments(N_SQUARES + 0.5, 0.5, N_SQUARES + 0.5, n + 0.5, lty = 2, col = PLOT_MUTED, lwd = 0.6)
   segments(0.5, n - N_SQUARES + 0.5, n + 0.5, n - N_SQUARES + 0.5, lty = 2,
            col = PLOT_MUTED, lwd = 0.6)

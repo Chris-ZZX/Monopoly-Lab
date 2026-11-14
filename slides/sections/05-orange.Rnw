@@ -1,10 +1,8 @@
-% Section 5 -- Is orange optimal?      Owner: Nikola (Task 4)               ~2.5 min
-% Code: analysis/tournament.R, R/strategies.R.
-% Prefix chunk labels with "orange-".
+% Tournament results (analysis/tournament.R).
 \boardsection{orange}{Is orange optimal?}
 
 <<orange-setup, echo=FALSE>>=
-# `tour` is read in section 4.
+# tour is loaded in 04-simulation
 pers_cols <- c("Orange Fanatic" = GROUP_COLOURS[["orange"]],
                "Hoarder" = "#2E2E2E", "Paris Snob" = GROUP_COLOURS[["dark_blue"]],
                "Jet-Setter" = "#9C9C9C", "Grandma" = GROUP_COLOURS[["pink"]])
@@ -12,22 +10,21 @@ rp <- tour$personalities$rates
 rc <- tour$colour_war$rates
 pc <- function(x) formatC(100 * x, format = "f", digits = 1)
 gp <- tour$personalities$games
-fan_set  <- gp$orange_by %in% "Orange Fanatic"     # fanatic got all three
+fan_set  <- gp$orange_by %in% "Orange Fanatic"     # fanatic got all of orange
 hoard_set <- gp$orange_by %in% "Hoarder"
 fan_win  <- gp$winner == "Orange Fanatic"
 snob_set <- gp$dark_blue_by %in% "Paris Snob"   # snob got Berlin and Paris
 gc <- tour$colour_war$games
-# Share of games in which each player completed its own set.
+# how often each player completed its own set
 sets <- names(GROUP_COLOURS)
 own  <- vapply(sets, function(s) mean(gc[[paste0(s, "_by")]] %in% s), 1)
 best_other <- names(which.max(own[sets != "orange"]))
 
-# The sentences on the slides below rest on these facts. If a rerun of
-# analysis/tournament.R changes them, stop the build instead of showing
-# text that contradicts the numbers.
-cap  <- function(x) sub("^(.)", "\\U\\1", x, perl = TRUE)   # capitalise first letter
+# The text on the slides depends on these results, so stop if a rerun of
+# the tournament changes them.
+cap  <- function(x) sub("^(.)", "\\U\\1", x, perl = TRUE)
 nice <- function(x) cap(gsub("_", " ", x))
-tied <- rc$player[rc$upper >= rc$lower[1]]   # intervals overlapping the leader's
+tied <- rc$player[rc$upper >= rc$lower[1]]   # CI overlaps with the winner's
 tie_text <- if (length(tied) > 1) {
   paste0(nice(paste(head(tied, -1), collapse = ", ")),
          " and ", gsub("_", " ", tail(tied, 1)), " overlap: a statistical tie.")

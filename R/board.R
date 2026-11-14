@@ -1,17 +1,10 @@
-# R/board.R -- the Monopoly board, card decks and rule constants.
-# Board: 1999 Euro edition (22 European capitals, airports as stations), in euro.
-
-# Everything else in this project builds on these objects. The data itself
-# lives in data/board.csv and data/cards.csv (columns: data/README.md).
-
-# ONE POSITION CONVENTION FOR THE WHOLE PROJECT
-#   A square's position is its row number in `board`:
-#     1 = GO, 11 = Jail / Just Visiting, 21 = Free Parking,
-#     31 = Go To Jail, 40 = Paris.
-#   Use the same numbers as row/column indices of transition matrices.
-#   Move with move(pos, steps) so the board wraps around after square 40.
-
-# Usage (works from any folder inside the repo):
+# Board, cards and rule constants (1999 Euro edition, amounts in euro).
+# The data is in data/board.csv and data/cards.csv, see data/README.md.
+#
+# Positions are row numbers of `board`: 1 = GO, 11 = Jail / Just Visiting,
+# 21 = Free Parking, 31 = Go To Jail, 40 = Paris. The transition matrices use
+# the same numbers.
+#
 #   source(here::here("R", "board.R"))
 #   board <- load_board()
 #   cards <- load_cards(board)
@@ -24,8 +17,7 @@ SQUARE_TYPES <- c("go", "street", "railroad", "utility", "tax",
 CARD_ACTIONS <- c("advance", "advance_nearest", "back", "jail", "jail_free",
                   "collect", "pay", "collect_each", "pay_each", "repairs")
 
-# Standard rules. Positions come from `board`, so only amounts
-# and counts live here.
+# Standard rules (positions come from `board`).
 RULES <- list(
   starting_cash       = 1500,
   go_salary           = 200,
@@ -36,10 +28,9 @@ RULES <- list(
   railroad_rent       = c(25, 50, 100, 200),  # by number of railroads owned
   utility_multiplier  = c(4, 10)         # times the dice total, by number of utilities owned
 )
-# Not modelled: the bank's limit of 32 houses and 12 hotels (see R/game.R).
+# We ignore the bank's limit of 32 houses and 12 hotels.
 
-# Plot colour of each street group.
-# Keep in sync with the pg-* colours in slides/beamerthemepassgo.sty.
+# Colours of the street groups (same as the pg-* colours in the slide theme).
 GROUP_COLOURS <- c(brown = "#8B4513", light_blue = "#A6DCF5", pink = "#D93A96",
                    orange = "#F7941D", red = "#ED1B24", yellow = "#FEF200",
                    green = "#1FB25A", dark_blue = "#0072BB")
@@ -71,7 +62,7 @@ load_board <- function(path = here::here("data", "board.csv")) {
 }
 
 
-# Adds `target_pos`: the position an `advance` card sends you to (NA otherwise).
+# Also adds target_pos, the square an "advance" card sends you to.
 load_cards <- function(board = load_board(),
                        path = here::here("data", "cards.csv")) {
   cards <- utils::read.csv(path, na.strings = "", stringsAsFactors = FALSE,
@@ -103,14 +94,12 @@ load_cards <- function(board = load_board(),
 }
 
 
-# Square reached after moving `steps` squares from `pos` (negative = backwards).
-# Vectorised: move(1:40, 7) gives the landing square from every square.
+# Square after moving `steps` from `pos` (negative = backwards), wraps past GO.
 move <- function(pos, steps) {
   (pos - 1L + steps) %% N_SQUARES + 1L
 }
 
-# First square of `type` strictly ahead of `pos`, wrapping past GO.
-# Example: nearest(37, "railroad", board) is 6 (Amsterdam Schiphol).
+# Next square of a given type after `pos`, e.g. the nearest airport.
 nearest <- function(pos, type, board) {
   targets <- board$pos[board$type == type]
   ahead <- targets[targets > pos]

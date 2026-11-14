@@ -1,13 +1,12 @@
-% Section 6 -- Conclusion              Owner: Task 6 (presentation lead)     ~1 min
+% Conclusion
 \boardsection{red}{Conclusion}
 
 <<end-setup, echo=FALSE>>=
-# Uses pi_stay (section 3) and the tournament results (section 5).
 is_street   <- board$type == "street"
 cap_rank    <- board$name[is_street][order(-pi_stay[seq_len(N_SQUARES)][is_street])]
 jail_share  <- sum(pi_stay[N_SQUARES + seq_len(N_JAIL_STATES)])
 co_leaders  <- gsub("_", " ", setdiff(tied, "orange"))
-# Counting every landing (also the stops between doubles) instead of turn ends.
+# same ranking if we count every landing, not just where turns end?
 land        <- landings_per_turn(board, cards)
 land_top    <- names(sort(land, decreasing = TRUE))[1:2]
 stopifnot("slide 'Conclusion' needs Jail and the top capital first by landings too" =

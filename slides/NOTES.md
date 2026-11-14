@@ -1,10 +1,8 @@
-# Speaker notes: Orange Is the New Black
+# Speaker notes
 
-One section per slide, in the order of `slides/slides.pdf` (slide numbers as in the footline; every page has its own number). Each section says what the slide claims, why it is true, where each number comes from in the code, which assumptions it rests on, and questions you may get.
+Notes for each slide (numbers as in the footline): what the slide says, why, and where the numbers come from. The numbers here are typed in by hand from the current code and `results/*.rds` (seed 2026), so if we rerun the simulations they need to be checked again. On the slides themselves everything is computed.
 
-Numbers are from the current code and from `results/*.rds` (seed 2026). If the model changes, rerun `Rscript analysis/walk.R` and `Rscript analysis/tournament.R`, rebuild, and recheck the numbers quoted here. The slides compute every result (probabilities, win rates, intervals) from the code and saved results; only this file has them typed in. A few rule counts are typed on the slides (three jail tries, up to three rolls per turn, the players' buy lists), as in the official rules.
-
-**Notation.** Every symbol is defined on the slide where it first appears. In order of appearance:
+**Notation** (and where it first shows up):
 
 | Symbol | Meaning | First defined |
 |---|---|---|
@@ -22,13 +20,13 @@ Numbers are from the current code and from `results/*.rds` (seed 2026). If the m
 | net worth, cash reserve | game terms | frames 14–15 |
 | 95% confidence interval | range for the true win rate | frame 17 |
 
-**Slide order (20 slides).** 1 title · 2–5 the question (board, dice, cards, Jail and orange) · 6 colour sets · 7 Chance card · 8 Markov chain · 9 heatmap · 10 simulation check · 11 jail stay or pay · 12 Community Chest card · 13 rules · 14 players · 15 one game in R · 16 tournament 1 · 17 tournament 2 · 18 conclusion · 19 Chance card · 20 references. About 10 minutes: intro 1.5, board 0.5, Markov 3, simulation 1.5, tournaments 2.5, conclusion 1.
+**Slide order (21 slides).** 1 title · 2–5 the question (board, dice, cards, Jail and orange) · 6 colour sets · 7 Chance card · 8 Markov chain and the matrix $P$ · 9 stationary distribution · 10 heatmap · 11 simulation check · 12 jail stay or pay · 13 Community Chest card · 14 rules · 15 players · 16 one game in R · 17 tournament 1 · 18 tournament 2 · 19 conclusion · 20 Chance card · 21 references. About 10 minutes: intro 1.5, board 0.5, Markov 3, simulation 1.5, tournaments 2.5, conclusion 1.
 
 ---
 
 ## Frame 1: Title deed
 
-*Orange Is the New Black*: Jail is the state you are in most often (frame 10), and on this board the orange set is Stockholm, **Vienna**, Lisbon. The jail cell on the board is drawn orange for the same joke.
+The title is the punchline: the uncle is half right, orange is a good set but buying only orange is not enough (frame 19). On this board the orange set is Stockholm, **Vienna**, Lisbon. The jail cell on the board is drawn orange as a small joke.
 
 Group 8: Nikola Meshkovski, Atharv Gudi, Zixin Zheng, Richard Takacs, Jakob Lutz, Parker Joseph Edward Ellis.
 
@@ -52,7 +50,7 @@ Frames 2–4 show the board, drawn by `board_tikz()` (`R/plots.R`) straight from
 - "One roll: square $i \to$ square $i + D$ (after square 40, count on from GO)". Two caveats:
   1. Positions are $1,\dots,40$, so strictly it is $(i - 1 + D) \bmod 40 + 1$. This is `move()` in `R/board.R`.
   2. It is one **roll**, not one turn. After doubles you roll again, and cards or Go To Jail can move you further.
-- The example $4 + 3 = 7$ from GO lands on square 8, a Chance square. The slide code checks that, so a board change would stop the build rather than show something wrong.
+- The example $4 + 3 = 7$ from GO lands on square 8, a Chance square. The slide code checks this with `stopifnot()`.
 
 ### Frame 4: cards, and why it is a Markov chain
 
@@ -60,7 +58,7 @@ Frames 2–4 show the board, drawn by `board_tikz()` (`R/plots.R`) straight from
 - **The arrows** start at square 8 and point at the 9 *different* places a Chance card sends you from there: Paris, GO, Dublin, Budapest, Amsterdam Schiphol, Frankfurt (nearest airport), European Parliament (nearest utility), Income Tax (back 3) and Jail. That is 10 moving cards; the two "nearest airport" cards go to the same place, so there are 9 arrows.
 - **Markov property.** The future depends on the past only through the present state:
   $$\Pr(X_{t+1} = j \mid X_t = i, X_{t-1} = i_{t-1}, \dots) = \Pr(X_{t+1} = j \mid X_t = i) = P_{ij}.$$
-  This only holds with the right *state* and two modelling choices (no longer on the slide: say them out loud if asked):
+  For this we need the right state and a few modelling choices (not on the slide, mention them if asked):
   1. **Jail needs extra states.** The state must tell *In Jail* (and on which try) apart from *Just Visiting*. How many tries you have left changes what happens next, so it must be part of the state.
   2. **Every card is a random draw.** In the real game a deck is drawn in order, so the cards already drawn tell you something about the next one, which breaks the Markov property. We treat each draw as a fresh random card, as if the deck were reshuffled every time. Ash and Bishop (1972) make the same assumption.
   3. **Doubles don't need extra states, because one step is one whole turn.** The doubles count resets at the start of every turn, so it never carries over. It is handled *inside* $P$ (frame 8).
@@ -105,9 +103,9 @@ Section opener.
 
 ## Frames 8–9: The board as a Markov chain, and the stationary distribution (`R/markov.R`)
 
-**Frame 8, in words.** The state $X_t$ is where the token is after turn $t$: one of 40 squares, or *In Jail* and waiting for the 1st, 2nd or 3rd try to roll doubles; 43 states in total (square 11 is Just Visiting: say it, the slide does not). One step of the chain is one whole turn. $P_{ij}$ is the probability of going from state $i$ to state $j$ in one turn; R computes it exactly from the 36 dice outcomes and the 32 cards.
+**Frame 8, in words.** The state $X_t$ is where the token is after turn $t$: one of 40 squares, or *In Jail* and waiting for the 1st, 2nd or 3rd try to roll doubles; 43 states in total (state 11 is Just Visiting). One step of the chain is one whole turn. $P_{ij}$ is the probability of going from state $i$ to state $j$ in one turn; R computes it exactly from the 36 dice outcomes and the 32 cards.
 
-**The heatmap of $P$** (`plot_transition_matrix()` in `R/plots.R`, "stay" rule). Row $i$ (top to bottom) is where the turn starts, column $j$ where it ends; every row sums to 1. Cells are binned (0, under 1%, 1–5%, 5–10%, over 10%) so that rare card jumps stay visible next to the dice. Walk the audience through it:
+**The heatmap of $P$** (`plot_transition_matrix()` in `R/plots.R`, "stay" rule). Row $i$ (top to bottom) is where the turn starts, column $j$ where it ends; every row sums to 1. Cells are binned (0, under 1%, 1–5%, 5–10%, over 10%) so that rare card jumps stay visible next to the dice. What to point out:
 - **Dark diagonal band:** the dice, 2 to 12 squares ahead, centred on 7. It wraps round at the bottom left (squares 30–40 pass GO).
 - **Empty column 31:** Go To Jail sends you to In Jail 1 at once, so no turn ends there.
 - **Jail column (41, In Jail 1):** filled in almost every row: Go To Jail, the Go to Jail cards and three doubles. Below the dashed line, the jail rows: In Jail 1 → In Jail 2 → In Jail 3 with 5/6 (no doubles), the rest is the roll out of Jail.
@@ -115,7 +113,7 @@ Section opener.
 
 **Frame 9, in words.** $\pi$ solves $\pi P = \pi$ with entries summing to 1, and $\pi_i$ is the long-run share of turns that end in state $i$. Sums like $\sum_{i=1}^{43}$ run over the 43 states.
 
-Neither slide shows the formula for $P$. Everything below is for questions about *how* $P$ is computed.
+The rest of this section is background, in case someone asks how $P$ is computed.
 
 ### The state space (43 states)
 
@@ -163,7 +161,7 @@ $\pi$ is a row vector with $\pi P = \pi$ and $\sum_i \pi_i = 1$.
 
 ### Check against the literature
 
-This board has the same layout and card effects as the US board: Dublin = Illinois Ave, Paris = Boardwalk, Budapest = St. Charles Place, Schiphol = Reading Railroad. So our numbers can be compared with published tables for the US board (for example Ash and Bishop 1972), where Illinois Ave is the most visited street, as Dublin is here. Do not quote exact published percentages from memory: the published tables differ in their rules (card handling, jail strategy, whether turn ends or landings are counted).
+This board has the same layout and card effects as the US board: Dublin = Illinois Ave, Paris = Boardwalk, Budapest = St. Charles Place, Schiphol = Reading Railroad. So our numbers can be compared with published tables for the US board (for example Ash and Bishop 1972), where Illinois Ave is the most visited street, as Dublin is here. We don't quote their exact percentages, because the published tables use slightly different rules (card handling, jail strategy, turn ends vs. landings).
 
 Likely question: *"Is $\pi$ the landing frequency?"* Not quite. $\pi$ counts where turns **end**. If you roll doubles, you also land on the squares in between, and those landings pay rent too. `landings_per_turn()` counts every landing: on average 1.10 landings per turn (more than 1 because of doubles, less than $1 + \tfrac16 + \tfrac1{36} \approx 1.19$ because turns in jail have no move). For rent, `landings_per_turn()` is the right measure.
 
@@ -174,9 +172,9 @@ Likely question: *"Is $\pi$ the landing frequency?"* Not quite. $\pi$ counts whe
 - Each square shows $100\,\pi_i$ (2 decimals). Redder means larger; the scale runs over the 36 non-corner squares.
 - The table merges the three jail states into one "In Jail" row (the note under the table says so): $4.33 + 3.61 + 3.01 = 10.94\%$ of turns. Next come Dublin 2.95%, GO 2.91%, Lisbon 2.85%, Vienna 2.84% and Paris CDG Airport 2.83%. Just Visiting alone is 2.08%, so the jail corner as a whole is $10.94 + 2.08 \approx 13\%$.
 - **Why Jail:** three ways in (frame 5), and with "stay" you sit there for up to three turns.
-- **Why squares 5–9 after jail are high:** everyone leaves jail sooner or later from square 11, and totals 6–8 are the most likely rolls. Stockholm (+6), Vienna (+8) and Lisbon (+9) are ranks 4, 3 and 2 among the 22 capitals (say it: "Lisbon 2nd, Vienna 3rd, Stockholm 4th"; the slide no longer lists them); Dublin (+14) is first, helped by the "Advance to Dublin" card.
+- **Why squares 5–9 after jail are high:** everyone leaves jail sooner or later from square 11, and totals 6–8 are the most likely rolls. Stockholm (+6), Vienna (+8) and Lisbon (+9) are ranks 4, 3 and 2 among the 22 capitals (Lisbon 2nd, Vienna 3rd, Stockholm 4th); Dublin (+14) is first, helped by the "Advance to Dublin" card.
 - **Why Chance squares are low (0.79–1.03%):** 10 of 16 cards move you away, so few turns *end* there.
-- Go To Jail is 0% (say it, the slide no longer does): it sends you to Jail at once, so no turn ends there.
+- Go To Jail is 0%: it sends you to Jail at once, so no turn ends there.
 - Least visited capitals: Vilnius 1.90%, Berlin 1.93%, Riga 1.95%. The stretch from square 32 round to 4 is reached mostly by tokens coming from squares 21–39. Go To Jail (31) and the Chance at 37 send many of those tokens elsewhere, so fewer arrive.
 
 ---
@@ -191,7 +189,7 @@ Likely question: *"Is $\pi$ the landing frequency?"* Not quite. $\pi$ counts whe
   It is the largest possible difference in probability between the two distributions for any event $A$, and lies between 0 and 1.
 - **Result.** 5 runs of $10^6$ turns each, distance measured at 17 checkpoints from $10^2$ to $10^6$ turns. Average distance: 0.24 at 100 turns, 0.025 at $10^4$, 0.0025 at $10^6$ (strategy "stay"; "pay" gives 0.0022).
 - **Rate $1/\sqrt{n}$.** Each $\hat\pi_i$ is an average along the chain. By the central limit theorem for ergodic Markov chains, its error is of order $\sigma_i/\sqrt{n}$, so the sum is too. In the plot, 100 times more turns gives 10 times smaller distance, a straight line of slope $-\tfrac12$ on log-log axes. The dashed orange line is $c/\sqrt n$, anchored at the final value.
-- **Why this convinces:** two independent programs agree to 0.25%, and the error shrinks at exactly the rate random noise should. A bug in building the matrices (say, processing Chance before Community Chest, which mishandles "go back 3" from square 37) would leave a gap that does not shrink. `tests/test-walk.R` also requires the distance after 50,000 turns to be below 0.02 for both strategies.
+- **Why we trust it:** two independent programs agree to 0.25%, and the error shrinks at exactly the rate random noise should. A bug in building the matrices (say, processing Chance before Community Chest, which mishandles "go back 3" from square 37) would leave a gap that does not shrink. `tests/test-walk.R` also requires the distance after 50,000 turns to be below 0.02 for both strategies.
 
 ---
 
@@ -203,7 +201,7 @@ Likely question: *"Is $\pi$ the landing frequency?"* Not quite. $\pi$ counts whe
 - **The bars** show $\pi^{\text{pay}}_i - \pi^{\text{stay}}_i$ in percentage points (pp: the difference of two percentages) for every square except Jail. Their sum is minus the change for the jail square: the total stays 1.
 - **Most squares gain** because paying means you move every turn. The biggest gains are Community Chest 18 (+7 after jail) at +0.37 pp, Frankfurt Airport (+5) at +0.35 pp and Lisbon (+9) at +0.33 pp. Lisbon gains most among the capitals.
 - **A few squares lose:** EU Parliament (+2) −0.13 pp, Helsinki (+4) −0.06, Free Parking (+10) −0.03 and Chance 23 (+12) −0.03. All of these are *doubles totals* from jail. Under "stay", leaving with doubles ends your turn there (no extra roll), which piles turn-ends onto squares an even distance after jail. Under "pay", doubles give an extra roll, so the turn ends further on. Stockholm (+6) and Vienna (+8) are doubles totals too, which is why they gain little.
-- **What it means for players** (not on the slide; good for questions): in jail you still collect rent but cannot land on anyone's hotel. So: pay early (to buy cities) and stay late (when the board is full of hotels). Our game players always pay; the chain shows the default "stay".
+- **What it means for players** (not on the slide): in jail you still collect rent but cannot land on anyone's hotel. So: pay early (to buy cities) and stay late (when the board is full of hotels). Our game players always pay; the chain shows the default "stay".
 
 ---
 
@@ -234,9 +232,9 @@ Two tournaments of 5,000 games each = 10,000 games.
 
 **Players:** 5 in tournament 1, 8 in tournament 2 (stated at the top of the slide), each starting on GO with €1500.
 
-**Who wins:** the last player who is not bankrupt. After 300 rounds (the slide says "300 turns each") the highest net worth (cash + purchase prices of cities + cost of houses) wins. A round is one turn for every player. Of the 5,000 personality games, 1.2% hit the cap; of the one-per-set games (tournament 2), 17.4% (8 players take longer: median 81 rounds vs 60).
+**Who wins:** the last player who is not bankrupt. After 300 rounds the highest net worth (cash + purchase prices of cities + cost of houses) wins. A round is one turn for every player. Of the 5,000 personality games, 1.2% hit the cap; of the one-per-set games (tournament 2), 17.4% (8 players take longer: median 81 rounds vs 60).
 
-**Simplifications to admit if asked:**
+**Other simplifications:**
 - Cards are random draws, as in the chain.
 - All players use the same jail habit: use a Get Out of Jail Free card if they have one, otherwise pay at once.
 - Building happens at the start of the player's own turn only.
@@ -261,7 +259,7 @@ The cash reserve is money the player never spends on buying or building. Everyon
 
 - The live code runs one game between the five personalities with `set.seed(69)`. The Hoarder wins by bankruptcy in round 68, and nobody completes the orange set (the Hoarder completes brown, green, pink, dark blue and red). One game proves nothing; frames 17–18 are the statistics. The seed only affects this slide: the tournaments use their own seed (2026).
 - A player is `make_player(name, buy, reserve, jail)`. `buy(game, me, pos)` returns TRUE/FALSE for the unowned square `pos`. `reserve` is cash the player never spends on buying or building. `jail` is "pay" or "stay".
-- `play_game()` is about 30 lines; `R/game.R` is about 270 lines including comments. Tested in `tests/test-game.R`: rent rules, house sales, bankruptcy to a creditor, even building, Grandma never buys.
+- `play_game()` is about 30 lines; `R/game.R` is about 260 lines including comments. Tested in `tests/test-game.R`: rent rules, house sales, bankruptcy to a creditor, even building, Grandma never buys.
 
 ---
 
@@ -280,9 +278,9 @@ The cash reserve is money the player never spends on buying or building. Everyon
 
 - Dot = share of games won; bar = 95% confidence interval (for the Hoarder it is narrower than the dot). The dashed line at $1/5$ is what pure luck would give.
 - **Why the Hoarder wins:** it owns many cities early, and its random landings complete sets (including orange) before the specialists can. The Hoarder is the first to own the whole orange set in 60.0% of games. That includes sets gained from a bankrupt Orange Fanatic.
-- **The Orange Fanatic completes orange in only 12.8% of games, and wins 64.6% of those.** In the other games it never wins (0 of 4,362). Careful: this conditions on something that happens *during* the game (completing the set needs the Fanatic to survive and to beat the Hoarder to the cities), so 64.6% is not "the effect of owning orange". Say "among games where it completed the set".
+- **The Orange Fanatic completes orange in only 12.8% of games, and wins 64.6% of those.** In the other games it never wins (0 of 4,362). Note that this conditions on something that happens *during* the game (completing the set needs the Fanatic to survive and to beat the Hoarder to the cities), so 64.6% is not "the effect of owning orange", only the win rate among games where it completed the set.
 - **The Paris Snob does better** than the Orange Fanatic (21.5% [20.4, 22.7] vs 8.2% [7.5, 9.0]): a 2-city set is easier to complete (35.3% of games vs 12.8%), and Paris/Berlin hotels charge up to €2000/€1500.
-- **Why not "the generalist always wins":** tournament 1 compares these five players only. The Hoarder is the only one who competes with every specialist for its cities, and it keeps a larger reserve (€100 vs €50). The conclusion therefore says "against our opponents".
+- **Why not "the generalist always wins":** tournament 1 compares these five players only. The Hoarder is the only one who competes with every specialist for its cities, and it keeps a larger reserve (€100 vs €50). So the result is only about these opponents.
 - **Interval method.** Clopper–Pearson inverts the exact binomial test. With $n = 5000$, the half-width is about $1.96\sqrt{p(1-p)/n}$, roughly ±1.3 pp at $p = 0.69$.
 - **Seat order barely matters:** the Hoarder wins 66–73% whichever seat moves first.
 
@@ -304,7 +302,7 @@ The cash reserve is money the player never spends on buying or building. Everyon
 | brown | 0.4% | [0.3, 0.7] | 42.1% |
 
 - The dashed line at $1/8 = 12.5\%$ is pure luck.
-- **"The intervals overlap: we cannot rank them."** Orange, dark blue and red have overlapping intervals. Overlap is a rough guide, not a test, so here is a direct check. Win counts are multinomial; for two players, $\widehat{\operatorname{Var}}(\hat p_1 - \hat p_2) = (p_1 + p_2 - (p_1 - p_2)^2)/n$.
+- **"A statistical tie."** Orange, dark blue and red have overlapping intervals. Overlap is a rough guide, not a test, so here is a direct check. Win counts are multinomial; for two players, $\widehat{\operatorname{Var}}(\hat p_1 - \hat p_2) = (p_1 + p_2 - (p_1 - p_2)^2)/n$.
   - Orange vs dark blue: difference 0.2 pp, $z \approx 0.2$.
   - Orange vs red: difference 1.2 pp, $z \approx 1.4$.
 
@@ -331,7 +329,7 @@ Both answers are computed from the same objects as the earlier slides (`pi_stay`
 
 ---
 
-## Assumptions worth saying out loud (all in one place)
+## All assumptions in one place
 
 1. **Cards are random draws** (Markov chain, walk and game alike). Real decks cycle in order.
 2. **The Markov chain ignores money** and Get Out of Jail Free cards. It describes one token's movement only.
@@ -340,8 +338,6 @@ Both answers are computed from the same objects as the earlier slides (`pi_stay`
 5. **Personalities are deliberately simple:** fixed buy lists and a cash reserve. Real players trade, which would help the Orange Fanatic complete its set.
 
 ## References (frame 21)
-
-What each reference is for, in case someone asks:
 
 - Ash, R. B. and Bishop, R. L. (1972). Monopoly as a Markov process. *Mathematics Magazine* 45(1), 26–29. The original Markov chain model of Monopoly, including the random-card assumption.
 - Stewart, I. (1996). How fair is Monopoly? *Scientific American* 274(4), 104–105. Popular account of the same idea.

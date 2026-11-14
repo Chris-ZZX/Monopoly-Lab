@@ -1,7 +1,5 @@
-% Section 4 -- Simulating full games   Owner: Nikola (Tasks 3 + 4)           ~1.5 min
-% Code: R/game.R, R/strategies.R. Load saved results with
-% readRDS(here::here("results", ...)); never run long simulations in the slides.
-% Prefix chunk labels with "sim-".
+% Simulating full games (R/game.R, R/strategies.R). The tournaments take a
+% few minutes, so we load the saved results instead of running them here.
 \boardsection{green}{Simulation}
 
 <<sim-setup, echo=FALSE>>=

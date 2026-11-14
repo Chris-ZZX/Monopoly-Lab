@@ -1,39 +1,31 @@
-# R/markov.R -- Monopoly as a Markov chain (Task 1).
+# Monopoly as a Markov chain. One step = one whole turn (including extra
+# rolls after doubles, cards and Go To Jail).
 #
-# One step of the chain is one full turn of one player: the first roll, any
-# extra rolls after doubles, card moves and Go To Jail.
+# States: 1-40 are the squares (11 = Just Visiting), 41-43 are "in jail"
+# before the 1st, 2nd and 3rd try to roll doubles.
 #
-# STATES (N_STATES = 43)
-#   1..40   the squares, by position. State 11 means "Just Visiting".
-#   41..43  "In Jail", about to make attempt 1, 2 or 3 to roll doubles.
+# Assumptions:
+# - cards are drawn at random every time (like reshuffling the deck), so
+#   each card has probability 1/16
+# - Get Out of Jail Free cards are treated as cards that don't move you
+# - jail "stay": try for doubles up to 3 times, after the 3rd miss pay and
+#   move with that roll; doubles out of jail don't give another roll
+# - jail "pay": pay right away and play a normal turn from Just Visiting
 #
-# ASSUMPTIONS
-#   * Every card is a fresh random draw from its deck (as if the deck were
-#     reshuffled before each draw), so each card has probability 1/16.
-#   * Get Out of Jail Free cards are never used: they count as cards that do
-#     not move you.
-#   * Jail strategy "stay": try for doubles on up to 3 turns; after the third
-#     failed attempt, pay the fine and move by that roll. Leaving with doubles
-#     does not give an extra roll.
-#     Jail strategy "pay": pay the fine at once and take a normal turn from
-#     Just Visiting, so attempts 2 and 3 never happen.
-#
-# Usage:
-#   P  <- transition_matrix(board, cards)       # 43 x 43, rows sum to 1
-#   pi <- stationary(P)                         # long-run share of turns
-#   landing_probs(board, cards)                 # the same, per square (40)
+#   P  <- transition_matrix(board, cards)   # 43 x 43
+#   pi <- stationary(P)
 
 N_JAIL_STATES <- RULES$max_jail_turns
 N_STATES      <- N_SQUARES + N_JAIL_STATES
 
-# All 36 outcomes of two dice, each with probability 1/36.
+# The 36 outcomes of two dice.
 DICE <- within(expand.grid(d1 = 1:6, d2 = 1:6), {
   total  <- d1 + d2
   double <- d1 == d2
 })
 P_DOUBLE <- mean(DICE$double)   # 1/6
 
-# Readable names for the 43 states.
+# Names for the 43 states.
 state_names <- function(board) {
   jail_sq <- board$pos[board$type == "jail"]
   nm <- board$name
@@ -41,8 +33,8 @@ state_names <- function(board) {
   c(nm, sprintf("In Jail %d", seq_len(N_JAIL_STATES)))   # before attempt 1, 2, 3
 }
 
-# Where each card of `deck` sends a token that drew it on square `pos`.
-# One entry per card; non-moving cards return `pos` itself.
+# Destination of each card in `deck` when drawn on square `pos`
+# (cards that don't move you just return pos).
 card_destinations <- function(deck, pos, board, cards) {
   d <- cards[cards$deck == deck, ]
   jail_in <- N_SQUARES + 1
@@ -56,15 +48,15 @@ card_destinations <- function(deck, pos, board, cards) {
   }, numeric(1))
 }
 
-# L[s, ]: where a token that has just landed on square s really ends up,
-# after Go To Jail and cards. Rows of other squares are unit vectors.
+# L[s, ] = where you end up after landing on s, once Go To Jail and cards
+# are applied. For normal squares the row is just a 1 at s.
 landing_matrix <- function(board, cards) {
   L <- diag(N_STATES)
   jail_in <- N_SQUARES + 1
   L[board$pos[board$type == "go_to_jail"], ] <- 0
   L[board$pos[board$type == "go_to_jail"], jail_in] <- 1
 
-  # Community Chest first: Chance "go back 3" can land on a Community Chest.
+  # Chest before Chance, because "go back 3" from Chance can hit a Chest.
   for (deck in c("chest", "chance")) {
     for (pos in board$pos[board$type == deck]) {
       dest <- card_destinations(deck, pos, board, cards)
@@ -78,10 +70,8 @@ landing_matrix <- function(board, cards) {
   L
 }
 
-# One roll of the dice from each square, split by doubles / no doubles.
-#   N[s, ] = P(roll is not doubles, end up in each state)
-#   D[s, ] = P(roll is doubles,     end up in each state)
-# Rows of the jail states are zero.
+# One roll from every square, split into no doubles (N) and doubles (D).
+# The jail rows stay zero here.
 roll_matrices <- function(board, cards) {
   L <- landing_matrix(board, cards)
   N <- D <- matrix(0, N_STATES, N_STATES)
@@ -94,39 +84,37 @@ roll_matrices <- function(board, cards) {
   list(N = N, D = D)
 }
 
-# Transition matrix of one full turn, N_STATES x N_STATES.
-# `m` lets callers reuse roll_matrices() they already computed.
+# Transition matrix for one full turn. Pass `m` to reuse roll_matrices().
 transition_matrix <- function(board, cards, jail = c("stay", "pay"),
                               m = roll_matrices(board, cards)) {
   jail    <- match.arg(jail)
   N       <- m$N
   D       <- m$D
   jail_sq <- board$pos[board$type == "jail"]
-  js      <- N_SQUARES + seq_len(N_JAIL_STATES)   # the in-jail states
+  js      <- N_SQUARES + seq_len(N_JAIL_STATES)   # jail states
 
-  # E keeps a token that went to jail mid-turn in jail for the rest of the turn.
+  # If you get sent to jail during the turn, you stay there.
   E <- matrix(0, N_STATES, N_STATES)
   E[js[1], js[1]] <- 1
-  # To_jail: from any square straight to jail (the last allowed double).
+  # third double: straight to jail
   to_jail <- matrix(0, N_STATES, N_STATES)
   to_jail[seq_len(N_SQUARES), js[1]] <- 1
 
-  # Work backwards from the last roll. On roll number RULES$doubles_to_jail,
-  # doubles send you to jail without moving; on earlier rolls doubles mean
-  # "move, then roll again".
+  # Start from the last roll and go backwards: on the 3rd roll doubles mean
+  # jail, before that they mean move and roll again.
   P <- N + P_DOUBLE * to_jail + E
   for (r in seq_len(RULES$doubles_to_jail - 1)) P <- N + D %*% P + E
 
-  # Rows of the in-jail states.
+  # jail rows
   for (a in seq_along(js)) {
     if (jail == "pay") {
-      P[js[a], ] <- P[jail_sq, ]   # pay the fine, then a normal turn
+      P[js[a], ] <- P[jail_sq, ]   # pay, then normal turn
     } else {
-      P[js[a], ] <- D[jail_sq, ]   # doubles: leave and move, no extra roll
+      P[js[a], ] <- D[jail_sq, ]   # doubles: move out, no extra roll
       if (a < length(js)) {
         P[js[a], js[a + 1]] <- P[js[a], js[a + 1]] + (1 - P_DOUBLE)
       } else {
-        P[js[a], ] <- P[js[a], ] + N[jail_sq, ]   # last attempt: pay and move
+        P[js[a], ] <- P[js[a], ] + N[jail_sq, ]   # 3rd miss: pay and move
       }
     }
   }
@@ -134,8 +122,8 @@ transition_matrix <- function(board, cards, jail = c("stay", "pay"),
   P
 }
 
-# Stationary distribution: the row vector pi with pi P = pi and sum(pi) = 1.
-# Solves (P^T - I) pi = 0 with one equation replaced by sum(pi) = 1.
+# Stationary distribution: solve pi P = pi, replacing one equation by
+# sum(pi) = 1.
 stationary <- function(P) {
   n <- nrow(P)
   A <- t(P) - diag(n)
@@ -145,8 +133,8 @@ stationary <- function(P) {
   pi
 }
 
-# Long-run share of turns that end on each square (length 40, sums to 1).
-# Turns that end in jail count for the jail square.
+# Share of turns ending on each of the 40 squares (jail states added to
+# the jail square).
 landing_probs <- function(board, cards, jail = c("stay", "pay")) {
   pi <- stationary(transition_matrix(board, cards, match.arg(jail)))
   jail_sq <- board$pos[board$type == "jail"]
@@ -156,10 +144,9 @@ landing_probs <- function(board, cards, jail = c("stay", "pay")) {
   out
 }
 
-# Expected number of times per turn that a token lands on each square
-# (length 40), counting every landing, also the ones in between doubles.
-# This is what rent depends on. Being sent to jail counts as a landing on the
-# jail square; sitting in jail does not.
+# Expected landings per turn on each square, also counting the stops in
+# between doubles (that's what matters for rent). Getting sent to jail counts
+# as landing on the jail square, sitting in jail doesn't.
 landings_per_turn <- function(board, cards, jail = c("stay", "pay")) {
   jail    <- match.arg(jail)
   m       <- roll_matrices(board, cards)
@@ -170,7 +157,7 @@ landings_per_turn <- function(board, cards, jail = c("stay", "pay")) {
   jail_sq <- board$pos[board$type == "jail"]
   js      <- N_SQUARES + seq_len(N_JAIL_STATES)
 
-  # V[s, ]: expected landings on each state during a turn that starts in s.
+  # V[s, ] = expected landings during a turn that starts in s
   to_jail <- matrix(0, N_STATES, N_STATES)
   to_jail[seq_len(N_SQUARES), js[1]] <- 1
   V <- N + P_DOUBLE * to_jail

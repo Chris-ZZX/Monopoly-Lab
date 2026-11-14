@@ -1,22 +1,15 @@
-# R/strategies.R -- player personalities and tournaments (Task 4).
-#
-# A player is a list (see R/game.R): name, buy(game, me, pos), reserve, jail.
-# All players build houses evenly on every full set they own, keeping their
-# reserve; they differ in what they buy and how much cash they keep.
-#
-# Usage:
-#   players <- personalities(board)
-#   res <- run_tournament(board, cards, players, n_games = 100)
-#   win_rates(res)
+# Players and tournaments. A player is a list with name, buy(game, me, pos),
+# reserve and jail (see game.R). Everyone builds the same way; they only
+# differ in what they buy and how much cash they keep.
 
 make_player <- function(name, buy, reserve = 100, jail = "pay") {
   list(name = name, buy = buy, reserve = reserve, jail = jail)
 }
 
-# Buy-functions for a set of positions.
+# buy() that only says yes to the given squares
 buys_only <- function(positions) function(game, me, pos) pos %in% positions
 
-# The five personalities of the talk.
+# Our five players.
 personalities <- function(board) {
   of <- function(cond) board$pos[cond]
   list(
@@ -28,9 +21,8 @@ personalities <- function(board) {
   )
 }
 
-# One player per colour set, each buying only its own set. Nobody competes for
-# a city, so the game compares the sets themselves. A set is completed only if
-# its owner lands on every one of its squares before going bankrupt.
+# One player per colour set, each only buys their own set, so nobody
+# competes for the same city.
 set_fanatics <- function(board, reserve = 50) {
   groups <- names(GROUP_COLOURS)
   lapply(groups, function(gr) {
@@ -38,10 +30,8 @@ set_fanatics <- function(board, reserve = 50) {
   })
 }
 
-# Play n_games games. The seating order is shuffled every game, so nobody
-# profits from always moving first. Returns one row per game. Columns
-# `<set>_by` name the player who first owned the whole colour set (NA if
-# nobody did), for example `orange_by`.
+# Play n_games games with shuffled seats. One row per game; the <set>_by
+# columns (e.g. orange_by) say who completed that set first.
 run_tournament <- function(board, cards, players, n_games, max_rounds = 300) {
   rows <- lapply(seq_len(n_games), function(i) {
     seats <- sample(length(players))
@@ -54,8 +44,7 @@ run_tournament <- function(board, cards, players, n_games, max_rounds = 300) {
   do.call(rbind, rows)
 }
 
-# Win rate of every player with an exact 95% binomial confidence interval
-# (Clopper-Pearson, from binom.test).
+# Win rates with 95% Clopper-Pearson intervals (binom.test).
 win_rates <- function(results, players = unique(results$winner)) {
   n <- nrow(results)
   out <- lapply(players, function(p) {

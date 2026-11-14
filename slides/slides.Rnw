@@ -1,16 +1,8 @@
-% Main slide file. Build with:  Rscript slides/build.R
-% (or open in RStudio and click "Compile PDF").
-%
-% Each section lives in its own file in sections/ -- edit only yours.
-% Theme commands (details in beamerthemepassgo.sty):
-%   \boardsection{orange}{Title}    start a section; frame titles take that colour
-%   \chancecard{...} \chestcard{...} full-slide card, e.g. as a section opener
-% Frames that show R code (echo=TRUE chunks) need \begin{frame}[fragile];
-% keep code lines under 60 characters.
+% Our slides. Build with  Rscript slides/build.R  (or "Compile PDF" in RStudio).
+% The sections are in sections/, the theme is beamerthemepassgo.sty.
 
 \documentclass[aspectratio=169, 11pt]{beamer}
 \usetheme{passgo}
-\newcommand{\todo}[1]{\textcolor{pg-red}{\textbf{TODO:} #1}}
 
 \title{Your Uncle Is Half Right: Monopoly Edition}
 \subtitle{Which Monopoly square do you land on most,\\ and should you buy Vienna?}
@@ -30,9 +22,9 @@ source(here::here("R", "game.R"))
 source(here::here("R", "strategies.R"))
 board <- load_board()
 cards <- load_cards(board)
-options(width = 60)  # R output that fits on a slide
+options(width = 60)  # so R output fits on a slide
 
-# Footline track: one colour per board square, straight from board.csv.
+# colours for the board in the footline
 track <- ifelse(board$type == "street", gsub("_", "", board$group),
          ifelse(board$type %in% c("railroad", "utility"), board$type, "other"))
 cat("\\def\\boardtrack{", paste(track, collapse = ","), "}\n", sep = "")

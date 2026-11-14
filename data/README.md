@@ -1,8 +1,6 @@
 # Board data
 
-Two small tables describe the whole game. Change game facts here, never inside R code. Load them with `load_board()` and `load_cards(board)` from `R/board.R`. Both functions check the files and stop with a clear message if something is wrong.
-
-An empty cell means "not applicable" and becomes `NA` in R. Files are UTF-8 (the cards use €).
+The board and the cards, loaded with `load_board()` and `load_cards(board)` from `R/board.R` (both check the files when loading). Empty cells mean "not applicable" (`NA` in R). The files are UTF-8 because of the €.
 
 ## Edition
 

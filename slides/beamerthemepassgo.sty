@@ -1,20 +1,11 @@
-% beamerthemepassgo.sty -- our own Beamer theme for Monopoly Lab.
+% Our Monopoly Beamer theme: title deed as title page, frame titles in the
+% colour of the section, the board as footline (the token does one lap
+% during the talk) and Chance / Community Chest cards.
 %
-%   * title page      a property title deed
-%   * frame titles    coloured like the current colour set
-%   * footline        the 40 board squares; a token moves one lap during the talk
-%   * section cards   full-slide Chance / Community Chest cards
-%   * R code          Sweave input/output styled to match
+%   \boardsection{orange}{Title}   new section in a colour set
+%   \chancecard{text}, \chestcard{text}
 %
-% Commands for slide authors:
-%   \boardsection{<set>}{<title>}  start a section in a colour set:
-%                                  brown, lightblue, pink, orange, red,
-%                                  yellow, green, darkblue
-%   \chancecard{<text>}            full-slide Chance card
-%   \chestcard{<text>}             full-slide Community Chest card
-%
-% The footline squares come from \boardtrack, which the setup chunk in
-% slides.Rnw writes from data/board.csv.
+% \boardtrack (footline colours) is set in slides.Rnw.
 
 \ProvidesPackage{beamerthemepassgo}
 
@@ -26,7 +17,7 @@
 \RequirePackage{roboto-mono}         % Roboto Mono code
 
 % ---- Colours ---------------------------------------------------------------
-% Colour sets: keep in sync with GROUP_COLOURS in R/board.R.
+% same as GROUP_COLOURS in R/board.R
 \definecolor{pg-brown}{HTML}{8B4513}
 \definecolor{pg-lightblue}{HTML}{A6DCF5}
 \definecolor{pg-pink}{HTML}{D93A96}
@@ -38,11 +29,11 @@
 \definecolor{pg-railroad}{HTML}{2E2E2E}
 \definecolor{pg-utility}{HTML}{9C9C9C}
 \definecolor{pg-other}{HTML}{DDD6C5}
-% Paper and ink.
+% background and text
 \definecolor{pg-paper}{HTML}{FBF7EE}
 \definecolor{pg-ink}{HTML}{1E2430}
 \definecolor{pg-muted}{HTML}{7A7468}
-\colorlet{pg-accent}{pg-orange}  % changed by \boardsection
+\colorlet{pg-accent}{pg-orange}  % set by \boardsection
 
 \setbeamercolor{background canvas}{bg=pg-paper}
 \setbeamercolor{normal text}{fg=pg-ink}
@@ -66,7 +57,7 @@
 \setbeamertemplate{enumerate item}{\textcolor{pg-accent}{\bfseries\insertenumlabel.}}
 \setbeamertemplate{blocks}[rounded][shadow=false]
 
-% ---- Frame title: colour strip, section label, slab title ------------------
+% ---- Frame title ------------------------------------------------------------
 \setbeamertemplate{frametitle}{%
   \nointerlineskip
   \begin{beamercolorbox}[wd=\paperwidth, ht=5pt, dp=0pt]{accent strip}\end{beamercolorbox}%
@@ -79,7 +70,7 @@
   \vskip0.2em
 }
 
-% ---- Footline: the board with a moving token -------------------------------
+% ---- Footline: board + token ------------------------------------------------
 \newlength{\pg@cell}
 \setbeamertemplate{footline}{%
   \pgfmathsetlength{\pg@cell}{\paperwidth/40}%
@@ -99,7 +90,7 @@
     \fill[white] (\pg@square+0.5,0.1cm) circle (0.05cm);
   \end{tikzpicture}}
 
-% ---- Title page: a title deed ----------------------------------------------
+% ---- Title page (title deed) ------------------------------------------------
 \setbeamertemplate{title page}{%
   \centering
   \begin{tikzpicture}
@@ -126,7 +117,7 @@
 % ---- Sections and cards ----------------------------------------------------
 \newcommand{\boardsection}[2]{\colorlet{pg-accent}{pg-#1}\section{#2}}
 
-% #1 deck name, #2 colour, #3 watermark symbol, #4 card text
+% #1 deck, #2 colour, #3 symbol, #4 text
 \newcommand{\pg@card}[4]{%
   \begin{frame}
     \centering\vfill
@@ -152,7 +143,7 @@
 \newcommand{\chancecard}[1]{\pg@card{CHANCE}{pg-orange}{?}{#1}}
 \newcommand{\chestcard}[1]{\pg@card{COMMUNITY CHEST}{pg-lightblue}{\texteuro}{#1}}
 
-% ---- R code from Sweave (applied after Sweave.sty is loaded) ---------------
+% ---- R code (after Sweave.sty is loaded) ------------------------------------
 \AtBeginDocument{%
   \DefineVerbatimEnvironment{Sinput}{Verbatim}{fontsize=\small,
     formatcom=\color{pg-ink}, frame=leftline, framerule=2.5pt,

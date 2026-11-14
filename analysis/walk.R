@@ -1,6 +1,4 @@
-# analysis/walk.R -- Task 2: check the Markov chain by simulation.
-# Run from anywhere in the repo:  Rscript analysis/walk.R   (under 1 minute)
-# Saves results/walk.rds, which slides/sections/03-markov.Rnw reads.
+# Simulation check of the Markov chain, saved to results/walk.rds.
 
 source(here::here("R", "board.R"))
 source(here::here("R", "markov.R"))

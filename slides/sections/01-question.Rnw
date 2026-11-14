@@ -1,8 +1,5 @@
-% Section 1 -- The question            Owner: Task 6 (presentation lead)   ~1.5 min
-% Four frames: the board, the dice, the cards, then Jail and the orange set.
-% The board is drawn by board_tikz() and the way out of Jail by
-% jail_exit_tikz(), both in R/plots.R; every number below is computed from
-% `board` and `cards`. Chunk labels start with "intro-".
+% Intro: the board, the dice, the cards, then Jail and the orange set.
+% Board pictures come from R/plots.R, all numbers from board and cards.
 \boardsection{brown}{The question}
 
 <<intro-numbers, echo=FALSE, results=tex>>=
@@ -16,19 +13,18 @@ jail   <- board$pos[board$type == "jail"]
 gtj    <- board$pos[board$type == "go_to_jail"]
 orange <- board$pos[board$group %in% "orange"]
 
-# Two dice: number of the 36 outcomes with total k (DICE is in R/markov.R).
+# number of ways to roll each total
 ways_tab <- table(DICE$total)
 totals   <- as.integer(names(ways_tab))
 ways     <- as.vector(ways_tab)
 
-# The example roll lands on Chance.
+# example roll from GO, lands on Chance
 roll   <- c(4, 3)
 landed <- move(go, sum(roll))
 stopifnot(board$type[landed] == "chance")
 
-# Where each Chance card sends you from that square, with the same function
-# the Markov chain uses. State N_SQUARES + 1 ("In Jail") is drawn on the jail
-# square; cards that do not move you have no arrow.
+# where the Chance cards send you from there (In Jail is drawn on the
+# jail square, cards that don't move you get no arrow)
 ch   <- cards[cards$deck == "chance", ]
 dest <- card_destinations("chance", landed, board, cards)
 dest[dest == N_SQUARES + 1] <- jail
@@ -63,7 +59,7 @@ defs <- c(
 cat(sprintf("\\def\\pg%s{%s}\n", names(defs), defs), sep = "")
 @
 
-% ---- Building blocks ---------------------------------------------------------
+% ---- helpers -------------------------------------------------------------------
 \tikzset{
   pg token/.pic={\fill[pg-ink] (0,0) circle (0.16); \fill[white] (0,0) circle (0.06);},
   pg caption/.style={text width=8.4cm, align=flush center, text=pg-ink, font=\small},
@@ -78,7 +74,7 @@ cat(sprintf("\\def\\pg%s{%s}\n", names(defs), defs), sep = "")
     \foreach \p in {#2} \fill[pg-ink] ($ (0,0) + 0.18*(\p) $) circle (0.055);
   \end{scope}}
 
-% Step 1: what is on the board, and the one variable we follow.
+% frame 1: the board
 \newcommand{\introstepboard}{%
   \node[pg big] at ([yshift=1.25cm]inner.center) {Monopoly, 1999 Euro edition};
   \node[pg caption] at ([yshift=0.2cm]inner.center)
@@ -88,7 +84,7 @@ cat(sprintf("\\def\\pg%s{%s}\n", names(defs), defs), sep = "")
   \node[pg caption, text width=11cm, font=\normalsize] at ([yshift=-1.35cm]inner.center)
     {Follow one token: \ $X_t$ = where it stands after turn $t$};}
 
-% Step 2: two dice move the token.
+% frame 2: dice
 \newcommand{\introstepdice}{%
   \pic at (sq\pggo) {pg token};
   \draw[pg-ink, line width=1.2pt, -{Latex[length=2.5mm]}, dashed]
@@ -119,7 +115,7 @@ cat(sprintf("\\def\\pg%s{%s}\n", names(defs), defs), sep = "")
   \node[font=\footnotesize, text=pg-muted] at (3.9,2.3)
     {7 is the most likely total: $6/36$.};}
 
-% Step 3: cards teleport you, but only the current state matters.
+% frame 3: cards, Markov property
 \newcommand{\introstepcards}{%
   \foreach \s in \pgcardsquares
     \draw[pg ring=pg-orange] (sq\s.south west) rectangle (sq\s.north east);
@@ -138,15 +134,11 @@ cat(sprintf("\\def\\pg%s{%s}\n", names(defs), defs), sep = "")
       = \Pr(X_{t+1} = j \mid X_t = i) = P_{ij}$\\[0.8ex]
      \textbf{A Markov chain} with transition matrix $P = (P_{ij})$.};}
 
-% Step 4: three ways into Jail, and one roll out of it lands on orange.
-% Layout: ways into Jail (top left), the uncle's question (top right),
-% the way out of Jail with its dice bars (bottom).
+% frame 4: ways into Jail, and from Jail to orange
 \newcommand{\introstepjail}{%
   \introjailexit
-  % Three ways in, one chip each, and an arrow down into the Jail corner.
   \node[anchor=north west, font=\robotoslab\bfseries\Large, text=pg-ink]
     at (0.3,7.65) {Jail is a magnet{\normalfont\mdseries\small\color{pg-muted}\ \ three ways in}};
-  % One row per way in: what happens on the left, how likely on the right.
   \tikzset{pg way/.style={draw=pg-red, line width=0.9pt, fill=white,
     rounded corners=3pt, text width=5.15cm, inner sep=3.5pt,
     anchor=north west, font=\footnotesize, text=pg-ink}}
@@ -158,7 +150,7 @@ cat(sprintf("\\def\\pg%s{%s}\n", names(defs), defs), sep = "")
     {\makebox[\linewidth]{\pgdoubles{} doubles in a row \hfill $(1/6)^{\pgdoubles} = 1/\pgptriple$}};
   \draw[pg-red, line width=2pt, -{Latex[length=3.5mm]}]
     (way3.south -| exjail.north) -- (exjail.north);
-  % The uncle and the question.
+  % uncle + question
   \node[draw=pg-ink, fill=white, rounded corners=6pt, inner sep=5pt,
         font=\large\itshape, text=pg-ink]
     (uncle) at (11.0,7.15) {``Always buy orange!''};
@@ -167,7 +159,7 @@ cat(sprintf("\\def\\pg%s{%s}\n", names(defs), defs), sep = "")
   \node[pg big, text=pg-orange!80!pg-ink] at (11.0,5.75) {Should you buy Vienna?};
   \node[font=\footnotesize, text=pg-muted] at (11.0,5.2)
     {First the long-run distribution $\pi$, then full games.};
-  % The way out: a brace over the orange bars.
+  % brace over the orange squares
   \draw[decorate, decoration={brace, amplitude=5pt}, pg-orange!80!pg-ink, line width=1pt]
     ([xshift=-0.1cm, yshift=0.5cm]bar7 -| ex6.west) --
     ([xshift=0.1cm, yshift=0.5cm]bar7 -| ex9.east)
@@ -179,7 +171,7 @@ cat(sprintf("\\def\\pg%s{%s}\n", names(defs), defs), sep = "")
     at ([yshift=0.75cm]ex1.west |- bar4)
     {Bars: how many of the 36 dice rolls reach each square from Jail.};}
 
-% ---- The frames: one per step ---------------------------------------------------
+% ---- frames ------------------------------------------------------------------
 \begin{frame}
   \vspace*{-0.2cm}\centering
   \begin{tikzpicture}\introboard\introstepboard\end{tikzpicture}

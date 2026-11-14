@@ -1,6 +1,4 @@
-% Section 3 -- Markov chain            Owner: Nikola (Tasks 1 + 2)            ~3 min
-% Code: R/markov.R (exact), R/walk.R + analysis/walk.R (simulation check).
-% Prefix chunk labels with "markov-".
+% Markov chain (R/markov.R) and the simulation check (R/walk.R, analysis/walk.R).
 \boardsection{darkblue}{Markov chain}
 
 \chancecard{Advance to the Markov chain.\\[0.4em]
@@ -18,7 +16,7 @@ in_jail  <- N_SQUARES + seq_len(N_JAIL_STATES)
 pct      <- function(x, d = 1) formatC(100 * x, format = "f", digits = d)
 short_name <- function(x) ifelse(x %in% names(SHORT_NAMES), SHORT_NAMES[x], x)
 
-# Squares that gain most from paying to leave jail at once.
+# squares that gain most when you pay to get out of jail
 gain     <- (pi_pay - pi_stay)[seq_len(N_SQUARES)]
 gain[jail_sq] <- NA
 top_gain <- order(gain, decreasing = TRUE)[1:3]
@@ -75,7 +73,7 @@ rm(pi, P)   # keep base::pi intact for later sections
 \end{frame}
 
 <<markov-heat, echo=FALSE, results=tex>>=
-# Heatmap of pi on the board: share of turns that end on each square.
+# heatmap of pi on the board
 sq_pi <- pi_stay[seq_len(N_SQUARES)]
 side  <- !(board$type %in% c("go", "jail", "parking", "go_to_jail"))
 heat  <- round(70 * (sq_pi - min(sq_pi[side])) / diff(range(sq_pi[side])))
@@ -84,7 +82,7 @@ cat("\\newcommand{\\markovheatboard}{\n",
     paste(board_tikz(board, fill = fill, values = pct(sq_pi, 2)), collapse = "\n"),
     "}\n", sep = "")
 
-# Top squares, with all jail states together.
+# top squares, jail states added up
 top <- c("In Jail" = sum(pi_stay[in_jail]), sq_pi)
 top <- sort(top, decreasing = TRUE)[1:6]
 names(top) <- short_name(names(top))
@@ -141,7 +139,7 @@ plot_convergence(walk, "stay")
   \end{columns}
 \end{frame}
 
-% One box per jail rule (a style with #1 must be set outside the frame).
+% has to be defined outside the frame because of the #1
 \tikzset{pg jailbox/.style={draw=#1, line width=1pt, fill=white,
   rounded corners=4pt, text width=2.4cm, minimum height=3.3cm,
   align=center, inner sep=4pt, anchor=north}}
