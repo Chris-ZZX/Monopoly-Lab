@@ -332,3 +332,45 @@ plot_win_rates <- function(rates, colours, chance_level = NULL) {
            lwd = 2, col = colours[rates$player])
   if (!is.null(chance_level)) abline(v = 100 * chance_level, lty = 2, col = PLOT_MUTED)
 }
+
+# The 43 x 43 transition matrix as a heatmap: row i (top to bottom) is the
+# state a turn starts in, column j the state it ends in. Probabilities are
+# binned into a few classes, so that both the dice band (around 1/6) and the
+# rare card jumps (under 1 %) stay visible. The jail states sit behind a
+# dashed line.
+P_BREAKS  <- c(0, 0.01, 0.05, 0.10, 1)
+P_COLOURS <- c("#E3EDF6", "#9CC5E6", "#0072BB", "#1E2430")   # light to dark
+P_LABELS  <- c("under 1 %", "1 to 5 %", "5 to 10 %", "over 10 %")
+
+plot_transition_matrix <- function(P, board, legend = TRUE) {
+  n <- nrow(P)
+  cls <- findInterval(P, P_BREAKS, left.open = TRUE, rightmost.closed = TRUE)
+  cls[P == 0] <- NA
+  z <- matrix(cls, n, n)
+  plot_style(mar = c(2.4, 2.6, 0.3, if (legend) 6 else 0.3))
+  # image() puts z[i, j] at x = i, y = j: transpose and flip so row 1 is on top.
+  image(seq_len(n), seq_len(n), t(z)[, n:1], col = P_COLOURS,
+        breaks = seq(0.5, length(P_COLOURS) + 0.5), axes = FALSE,
+        xlab = "", ylab = "", asp = 1)
+  rect(0.5, 0.5, n + 0.5, n + 0.5, border = PLOT_MUTED, lwd = 0.6)
+  # Labels at the corners of the board and at the jail states.
+  corners <- board$pos[board$type %in% c("go", "jail", "parking", "go_to_jail")]
+  at  <- c(corners, N_SQUARES + 2)
+  lab <- c(corners, "Jail")
+  axis(1, at = at, labels = lab, tick = FALSE, cex.axis = 0.7, line = -0.35)
+  axis(2, at = n + 1 - at, labels = lab, tick = FALSE, cex.axis = 0.7, line = -0.35)
+  mtext(expression("to state " * italic(j)), side = 1, line = 1.5, cex = 0.8, col = PLOT_INK)
+  mtext(expression("from state " * italic(i)), side = 2, line = 1.4, cex = 0.8,
+        col = PLOT_INK, las = 0)
+  # Dashed lines between the 40 squares and the jail states.
+  segments(N_SQUARES + 0.5, 0.5, N_SQUARES + 0.5, n + 0.5, lty = 2, col = PLOT_MUTED, lwd = 0.6)
+  segments(0.5, n - N_SQUARES + 0.5, n + 0.5, n - N_SQUARES + 0.5, lty = 2,
+           col = PLOT_MUTED, lwd = 0.6)
+  if (legend) {
+    par(xpd = NA)
+    legend(n + 2, n + 0.5, legend = c(rev(P_LABELS), "0"),
+           fill = c(rev(P_COLOURS), "white"), border = c(rev(P_COLOURS), PLOT_MUTED),
+           bty = "n", cex = 0.75, text.col = PLOT_INK, y.intersp = 1.3,
+           title = expression(italic(P)[ij]), title.col = PLOT_INK, title.adj = 0.1)
+  }
+}

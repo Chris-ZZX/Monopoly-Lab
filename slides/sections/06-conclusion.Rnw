@@ -16,21 +16,22 @@ to_orange   <- board$pos[board$group %in% "orange"] - jail_sq
 @
 
 \begin{frame}{Conclusion}
+  \vspace{0.4em}
   \textbf{Where do you land most?}\\
-  In Jail: \Sexpr{pct(jail_share)}\,\% of all turns end there, against
+  In Jail: \Sexpr{pct(jail_share)}\,\% of all turns, against
   \Sexpr{100 / N_SQUARES}\,\% per square on a fair board. Among the capitals:
   \Sexpr{cap_rank[1]}, then \Sexpr{cap_rank[2]} and \Sexpr{cap_rank[3]} (almost tied).
-  Counting every landing, also the stops between doubles, Jail and \Sexpr{cap_rank[1]}
-  stay on top. Orange lies \Sexpr{min(to_orange)} to \Sexpr{max(to_orange)} squares
-  after Jail, and totals near 7 are the most likely dice rolls.
-  \bigskip
+  Why orange? It lies \Sexpr{min(to_orange)} to \Sexpr{max(to_orange)} squares
+  after Jail, right where the likeliest dice totals land.
+  Counting every landing, not only turn ends, gives the same top two.
+  \medskip
 
   \textbf{Should you buy Vienna?}\\
-  Yes, if you can get the whole set: in a fight between colour sets, orange is
-  joint best with \Sexpr{paste(co_leaders, collapse = " and ")}.
-  But buying \emph{only} orange is not enough: against our opponents, the Hoarder,
-  who buys everything, wins \Sexpr{pc(rp$rate[rp$player == "Hoarder"])}\,\% of games.
-  \bigskip
+  Yes, if you get the whole set: among the colour sets, orange ties with
+  \Sexpr{paste(co_leaders, collapse = " and ")}.
+  But orange \emph{alone} is not enough: the Hoarder, who buys everything,
+  wins \Sexpr{pc(rp$rate[rp$player == "Hoarder"])}\,\% of games.
+  \medskip
 
   \centering
   \begin{tikzpicture}

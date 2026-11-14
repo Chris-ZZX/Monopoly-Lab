@@ -41,3 +41,17 @@ test_that("jail_exit_tikz draws the squares after Jail with dice bars", {
   chars <- strsplit(paste(tikz, collapse = ""), "")[[1]]
   expect_equal(sum(chars == "{"), sum(chars == "}"))
 })
+
+test_that("plot_transition_matrix draws the 43 x 43 matrix", {
+  source(here::here("R", "markov.R"))
+  P <- transition_matrix(board, load_cards(board))
+  # Every positive entry falls into one of the colour classes.
+  cls <- findInterval(P[P > 0], P_BREAKS, left.open = TRUE, rightmost.closed = TRUE)
+  expect_true(all(cls >= 1 & cls <= length(P_COLOURS)))
+  expect_length(P_LABELS, length(P_COLOURS))
+  f <- tempfile(fileext = ".pdf")
+  pdf(f)
+  expect_silent(plot_transition_matrix(P, board))
+  dev.off()
+  expect_gt(file.size(f), 0)
+})

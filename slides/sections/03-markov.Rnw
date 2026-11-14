@@ -24,17 +24,42 @@ gain[jail_sq] <- NA
 top_gain <- order(gain, decreasing = TRUE)[1:3]
 @
 
-\begin{frame}[fragile]{The board as a Markov chain}
+\begin{frame}{The board as a Markov chain}
   \small
   \begin{itemize}\setlength{\itemsep}{0.2ex}
     \item \textbf{State} $X_t$: where the token is after turn $t$. Either one of the
-          \Sexpr{N_SQUARES} squares (square \Sexpr{jail_sq} is \emph{Just Visiting}),
-          or \emph{In Jail} and waiting for its 1st, 2nd or 3rd try to roll doubles.
-          That makes \Sexpr{N_STATES} states in total.
+          \Sexpr{N_SQUARES} squares, or \emph{In Jail} and waiting for its 1st, 2nd
+          or 3rd try to roll doubles. That makes \Sexpr{N_STATES} states in total.
     \item \textbf{One step} is one whole turn: up to three rolls, plus any card or Go To Jail.
     \item \textbf{Transition matrix} $P$: \ $P_{ij} = \Pr(X_{t+1} = j \mid X_t = i)$
           for states $i, j = 1, \dots, \Sexpr{N_STATES}$, computed exactly from the
           36 dice outcomes and the \Sexpr{nrow(cards)} cards.
+  \end{itemize}
+  \vspace{-0.6ex}
+  \begin{columns}[c]
+    \begin{column}{0.52\textwidth}
+      \centering
+\setkeys{Gin}{height=3.75cm}
+<<markov-matrix, fig=TRUE, echo=FALSE, width=3.0, height=1.95>>=
+plot_transition_matrix(P_stay, board)
+@
+    \end{column}
+    \begin{column}{0.44\textwidth}
+      \footnotesize
+      \begin{itemize}\setlength{\itemsep}{0.3ex}
+        \item Row $i$: where a turn from state $i$ ends. Each row sums to 1.
+        \item Dark band: the dice, 2 to 12 squares ahead.
+        \item Empty column \Sexpr{board$pos[board$type == "go_to_jail"]}:
+              no turn ends on Go To Jail.
+        \item Light cells: cards, doubles and Jail.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{The long run: the stationary distribution}
+  \small
+  \begin{itemize}
     \item \textbf{Stationary distribution} $\pi$: \ $\pi P = \pi$ and
           $\sum_{i=1}^{\Sexpr{N_STATES}} \pi_i = 1$.
           $\pi_i$ is the long-run share of turns that end in state $i$.
@@ -66,13 +91,6 @@ names(top) <- short_name(names(top))
 cat("\\newcommand{\\markovtop}{",
     paste0(names(top), " & ", pct(top, 2), "\\,\\% \\\\", collapse = "\n"),
     "}\n", sep = "")
-orange <- board$pos[board$group %in% "orange"]
-streets <- board$type == "street"
-rank_street <- rank(-sq_pi[streets])[match(orange, board$pos[streets])]
-ordinal <- function(k) paste0(k, c("st", "nd", "rd", rep("th", 20))[k])
-o <- order(rank_street)
-cat(sprintf("\\def\\markovorangerank{%s}\n",
-            paste(board$name[orange][o], ordinal(rank_street[o]), collapse = ", ")))
 @
 
 \begin{frame}
@@ -91,41 +109,42 @@ cat(sprintf("\\def\\markovorangerank{%s}\n",
       at ([yshift=-0.1cm]top.south west) {In Jail: the three jail states together.};
     \node[anchor=north west, font=\small, text=pg-ink, text width=5.6cm, align=flush left]
       at ([shift={(5.7cm,-1.6cm)}]inner.north west)
-      {If every square were equally likely: $1/\Sexpr{N_SQUARES} = \Sexpr{100 / N_SQUARES}\,\%$ each.\\[0.6ex]
-       Go To Jail: $0\,\%$. It sends you to Jail at once, so no turn ends there.\\[0.6ex]
-       Ranks among the \Sexpr{sum(streets)} capitals: \markovorangerank.};
+      {If every square were equally likely: $1/\Sexpr{N_SQUARES} = \Sexpr{100 / N_SQUARES}\,\%$ each.};
   \end{tikzpicture}
 \end{frame}
 
 \begin{frame}{Check: theory vs.\ simulation}
   \begin{columns}[c]
-    \begin{column}{0.56\textwidth}
+    \begin{column}{0.45\textwidth}
 \setkeys{Gin}{width=\linewidth}
 <<markov-conv, fig=TRUE, echo=FALSE, width=4.6, height=3.3>>=
 plot_convergence(walk, "stay")
 @
     \end{column}
-    \begin{column}{0.42\textwidth}
+    \begin{column}{0.54\textwidth}
       \small
-      We simulate one token with real dice and random cards, without using $P$:
-      \Sexpr{ncol(walk$stay$tv)} runs of $10^{\Sexpr{log10(walk$n_turns)}}$ turns
-      (one grey line each).
-      \medskip
-
-      $\hat\pi_i$: share of the first $n$ simulated turns that end in state $i$.\\
-      Distance: $d = \frac12 \sum_{i=1}^{\Sexpr{N_STATES}} |\hat\pi_i - \pi_i|$,
-      from 0 (equal) to 1.
-      \medskip
-
-      After $10^{\Sexpr{log10(walk$n_turns)}}$ turns:
-      $d = \Sexpr{formatC(mean(walk$stay$tv[length(walk$checkpoints), ]), format = "f", digits = 4)}$.
-      \medskip
-
-      $d$ falls like $1/\sqrt{n}$: 100 times more turns, 10 times smaller $d$.
-      The simulation confirms $\pi$.
+      \vspace*{-1.6em}
+      \begin{itemize}\setlength{\itemsep}{0.3ex}
+        \item We simulate one token with random dice and cards, straight from the
+              rules, not \mbox{from $P$.}
+        \item \Sexpr{ncol(walk$stay$tv)} runs of $10^{\Sexpr{log10(walk$n_turns)}}$ turns
+              (one grey line each).
+        \item $\hat\pi_i$: share of the first $n$ simulated turns that end in state $i$.
+        \item Distance: $d = \frac12 \sum_{i=1}^{\Sexpr{N_STATES}} |\hat\pi_i - \pi_i|$,
+              from 0 (equal) to 1.
+        \item After $10^{\Sexpr{log10(walk$n_turns)}}$ turns:
+              $d = \Sexpr{formatC(mean(walk$stay$tv[length(walk$checkpoints), ]), format = "f", digits = 4)}$.
+        \item $d$ falls like $1/\sqrt{n}$: 100 times more turns, 10 times smaller $d$.
+              The simulation confirms $\pi$.
+      \end{itemize}
     \end{column}
   \end{columns}
 \end{frame}
+
+% One box per jail rule (a style with #1 must be set outside the frame).
+\tikzset{pg jailbox/.style={draw=#1, line width=1pt, fill=white,
+  rounded corners=4pt, text width=2.4cm, minimum height=3.3cm,
+  align=center, inner sep=4pt, anchor=north}}
 
 \begin{frame}{Jail: stay or pay?}
   \begin{columns}[c]
@@ -137,23 +156,27 @@ plot_jail_shift(board, pi_stay, pi_pay)
     \end{column}
     \begin{column}{0.42\textwidth}
       \small
-      \textbf{Stay} (used so far): try to roll doubles for up to 3 turns,
-      then pay €\Sexpr{RULES$jail_fine}.\\
-      \textbf{Pay}: pay €\Sexpr{RULES$jail_fine} at once and move on.
+      \begin{tikzpicture}
+        \node[pg jailbox=pg-muted] (stay) at (0,0)
+          {{\robotoslab\bfseries Stay} {\scriptsize\color{pg-muted}(so far)}\\[0.4ex]
+           {\scriptsize roll for doubles up to 3 times, then pay €\Sexpr{RULES$jail_fine}}\\[0.6ex]
+           {\robotoslab\bfseries\Large \Sexpr{pct(sum(pi_stay[in_jail]))}\,\%}\\
+           {\scriptsize of turns end in Jail}};
+        \node[pg jailbox=pg-darkblue] (pay) at (3.0,0)
+          {{\robotoslab\bfseries Pay}\\[0.4ex]
+           {\scriptsize pay €\Sexpr{RULES$jail_fine} at once\\ and move on}\\[0.6ex]
+           {\robotoslab\bfseries\Large\color{pg-darkblue} \Sexpr{pct(sum(pi_pay[in_jail]))}\,\%}\\
+           {\scriptsize of turns end in Jail}};
+      \end{tikzpicture}
       \medskip
 
-      Share of turns that end in Jail:
-      \Sexpr{pct(sum(pi_stay[in_jail]))}\,\% (stay) vs
-      \Sexpr{pct(sum(pi_pay[in_jail]))}\,\% (pay).
-      \medskip
+      \footnotesize
+      Paying keeps you moving: almost every square gains.
+      Most of all \Sexpr{paste(short_name(board$name[top_gain]), collapse = ", ")}
+      (\Sexpr{paste((top_gain - jail_sq) %% N_SQUARES, collapse = ", ")} squares after Jail).
+      \smallskip
 
-      Paying keeps you moving, so almost every square is reached more often.
-      Biggest gains:
-      \Sexpr{paste0(short_name(board$name[top_gain]), " (", (top_gain - jail_sq) %% N_SQUARES, ")", collapse = ", ")};
-      in brackets, squares after Jail.
-      \medskip
-
-      {\color{pg-muted} Bars: $\pi_i^{\text{pay}} - \pi_i^{\text{stay}}$,
+      {\footnotesize\color{pg-muted} Bars: $\pi_i^{\text{pay}} - \pi_i^{\text{stay}}$,
       in percentage points.}
     \end{column}
   \end{columns}

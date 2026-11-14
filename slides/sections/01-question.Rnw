@@ -50,7 +50,8 @@ defs <- c(
   chancedest = paste(dest, collapse = ","),
   nchance = nrow(ch),
   nchancemove = sum(ch$action %in% movers),
-  nmovers = sum(cards$action %in% movers),
+  nchestmove = sum(cards$action[cards$deck == "chest"] %in% movers),
+  nchest = sum(cards$deck == "chest"),
   njailcards = sum(cards$action == "jail"),
   ncards = nrow(cards),
   nsquares = N_SQUARES,
@@ -126,50 +127,57 @@ cat(sprintf("\\def\\pg%s{%s}\n", names(defs), defs), sep = "")
   \foreach \d in \pgchancedest
     \draw[pg-orange, line width=0.9pt, -{Latex[length=2mm]}]
       (sq\pglanded.north) .. controls +(0,2.2) .. (sq\d);
-  \node[pg caption, text width=11.3cm, fill=none, fill opacity=0.8,
-        text opacity=1, inner sep=4pt]
+  \node[pg caption, text width=11.3cm, fill=pg-paper, draw=pg-other,
+        rounded corners=4pt, inner sep=6pt]
     at ([yshift=0.75cm]inner.center)
-    {\pgnmovers{} of the \pgncards{} cards move you; on Chance,
-     \pgnchancemove{} of the \pgnchance{} do.\\[0.8ex]
+    {Cards can move you, too. On Chance, \pgnchancemove{} of the \pgnchance{} cards
+     send you to another square (arrows); on Community Chest,
+     \pgnchestmove{} of the \pgnchest{} do.\\[0.8ex]
      Still, the next turn depends only on where you are now:\\[0.5ex]
      $\Pr(X_{t+1} = j \mid X_t = i,\, X_{t-1} = i_{t-1}, \dots)
       = \Pr(X_{t+1} = j \mid X_t = i) = P_{ij}$\\[0.8ex]
-     \textbf{A Markov chain} with transition matrix $P = (P_{ij})$.\\[0.6ex]
-     {\footnotesize\color{pg-muted} For this, the state must tell \emph{In Jail}
-      (and on which try) apart from \emph{Just Visiting},
-      and every card must be a random draw.}};}
+     \textbf{A Markov chain} with transition matrix $P = (P_{ij})$.};}
 
 % Step 4: three ways into Jail, and one roll out of it lands on orange.
+% Layout: ways into Jail (top left), the uncle's question (top right),
+% the way out of Jail with its dice bars (bottom).
 \newcommand{\introstepjail}{%
   \introjailexit
-  % Three ways in (top left), with an arrow down to the Jail corner.
-  \node[pg caption, text width=6.4cm, anchor=north west, align=flush left]
-    (ways) at (0.1,7.6)
-    {{\robotoslab\bfseries\large Jail is a magnet.} Three ways in:\\[0.6ex]
-     \begin{tabular}{@{\textbullet\ }l@{\quad}l}
-       land on \emph{Go To Jail}    & 1 of \pgnsquares{} squares \\
-       draw a \emph{Go to Jail} card & \pgnjailcards{} of \pgncards{} cards \\
-       roll doubles \pgdoubles{} times in a row & $(1/6)^{\pgdoubles} = 1/\pgptriple$
-     \end{tabular}};
+  % Three ways in, one chip each, and an arrow down into the Jail corner.
+  \node[anchor=north west, font=\robotoslab\bfseries\Large, text=pg-ink]
+    at (0.3,7.65) {Jail is a magnet{\normalfont\mdseries\small\color{pg-muted}\ \ three ways in}};
+  % One row per way in: what happens on the left, how likely on the right.
+  \tikzset{pg way/.style={draw=pg-red, line width=0.9pt, fill=white,
+    rounded corners=3pt, text width=5.15cm, inner sep=3.5pt,
+    anchor=north west, font=\footnotesize, text=pg-ink}}
+  \node[pg way] (way1) at (0.3,6.75)
+    {\makebox[\linewidth]{\emph{Go To Jail} square \hfill \textbf{1} of \pgnsquares{} squares}};
+  \node[pg way] (way2) at ([yshift=-0.18cm]way1.south west)
+    {\makebox[\linewidth]{\emph{Go to Jail} card \hfill \textbf{\pgnjailcards} of \pgncards{} cards}};
+  \node[pg way] (way3) at ([yshift=-0.18cm]way2.south west)
+    {\makebox[\linewidth]{\pgdoubles{} doubles in a row \hfill $(1/6)^{\pgdoubles} = 1/\pgptriple$}};
   \draw[pg-red, line width=2pt, -{Latex[length=3.5mm]}]
-    (exjail.north |- 0,5.5) -- (exjail.north);
-  % The bars, and the way out to orange.
-  \node[pg caption, text width=4.2cm, anchor=north west, align=flush left,
-        font=\footnotesize, text=pg-muted]
-    at (2.6,5.0) {Bars: how many of the 36 dice rolls reach each square from Jail.};
-  \node[pg caption, text width=6.6cm, anchor=north, align=center]
-    at (10.75,5.12)
-    {Pay to leave Jail, roll \pgorangeor{}: you are on orange.\\[0.4ex]
-     $\Pr(D \in \{\pgorangeset\}) = (\pgorangeways)/36 \approx \pgorangepct\,\%$};
-  % The uncle and the question (top right).
+    (way3.south -| exjail.north) -- (exjail.north);
+  % The uncle and the question.
   \node[draw=pg-ink, fill=white, rounded corners=6pt, inner sep=5pt,
         font=\large\itshape, text=pg-ink]
-    (uncle) at (10.9,7.25) {``Always buy orange!''};
+    (uncle) at (11.0,7.15) {``Always buy orange!''};
   \node[font=\footnotesize, text=pg-muted, anchor=north east]
     at ([yshift=-0.05cm]uncle.south east) {your uncle, every Christmas};
-  \node[pg big, text=pg-orange!80!pg-ink] at (10.9,5.95) {Should you buy Vienna?};
-  \node[font=\footnotesize, text=pg-ink] at (10.9,5.4)
-    {First the long-run distribution $\pi$, then full games.};}
+  \node[pg big, text=pg-orange!80!pg-ink] at (11.0,5.75) {Should you buy Vienna?};
+  \node[font=\footnotesize, text=pg-muted] at (11.0,5.2)
+    {First the long-run distribution $\pi$, then full games.};
+  % The way out: a brace over the orange bars.
+  \draw[decorate, decoration={brace, amplitude=5pt}, pg-orange!80!pg-ink, line width=1pt]
+    ([xshift=-0.1cm, yshift=0.5cm]bar7 -| ex6.west) --
+    ([xshift=0.1cm, yshift=0.5cm]bar7 -| ex9.east)
+    node[midway, above=6pt, font=\small, text=pg-ink, align=center]
+    {Pay to leave Jail, roll \pgorangeor: \textbf{orange}.\\
+     $(\pgorangeways)/36 \approx \pgorangepct\,\%$};
+  \node[anchor=south west, text width=3.6cm, align=flush left,
+        font=\scriptsize, text=pg-muted]
+    at ([yshift=0.75cm]ex1.west |- bar4)
+    {Bars: how many of the 36 dice rolls reach each square from Jail.};}
 
 % ---- The frames: one per step ---------------------------------------------------
 \begin{frame}

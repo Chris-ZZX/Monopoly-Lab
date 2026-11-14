@@ -29,8 +29,8 @@ cap  <- function(x) sub("^(.)", "\\U\\1", x, perl = TRUE)   # capitalise first l
 nice <- function(x) cap(gsub("_", " ", x))
 tied <- rc$player[rc$upper >= rc$lower[1]]   # intervals overlapping the leader's
 tie_text <- if (length(tied) > 1) {
-  paste0("The intervals of ", paste(gsub("_", " ", head(tied, -1)), collapse = ", "),
-         " and ", gsub("_", " ", tail(tied, 1)), " overlap: we cannot rank them.")
+  paste0(nice(paste(head(tied, -1), collapse = ", ")),
+         " and ", gsub("_", " ", tail(tied, 1)), " overlap: a statistical tie.")
 } else paste0(nice(tied), " wins clearly.")
 stopifnot(
   "slide 'Tournament 2' needs orange among the leaders" = "orange" %in% tied,
@@ -58,22 +58,20 @@ plot_win_rates(rp, pers_cols, chance_level = 1 / nrow(rp))
     \begin{column}{0.40\textwidth}
       \small
       \Sexpr{format(tour$n_games, big.mark = ",")} games, seats shuffled.
-      Dot: share won (its 95\,\% interval is as wide).
+      Dot: share won (its 95\,\% interval fits inside).
       Dashed: $1/\Sexpr{nrow(rp)}$, pure luck.
       \medskip
 
-      The \textbf{Hoarder} wins \Sexpr{pc(rp$rate[rp$player == "Hoarder"])}\,\%.
-      It is the first to own all of orange in \Sexpr{pc(mean(hoard_set))}\,\%
-      of all games.
+      \textbf{Hoarder}: wins \Sexpr{pc(rp$rate[rp$player == "Hoarder"])}\,\%,
+      and is the first to own all of orange in \Sexpr{pc(mean(hoard_set))}\,\% of games.
       \medskip
 
-      The \textbf{Orange Fanatic} completes orange in only
-      \Sexpr{pc(mean(fan_set))}\,\% of games. It wins \Sexpr{pc(mean(fan_win[fan_set]))}\,\%
-      of those and none of the others.
+      \textbf{Orange Fanatic}: completes orange in only \Sexpr{pc(mean(fan_set))}\,\%
+      of games. Wins \Sexpr{pc(mean(fan_win[fan_set]))}\,\% of those, none of the rest.
       \medskip
 
-      The \textbf{Paris Snob} needs only two cities: it completes its set in
-      \Sexpr{pc(mean(snob_set))}\,\% of games.
+      \textbf{Paris Snob}: needs only two cities, gets both in
+      \Sexpr{pc(mean(snob_set))}\,\% of games, and beats the Fanatic.
     \end{column}
   \end{columns}
 \end{frame}
@@ -88,23 +86,20 @@ plot_win_rates(rc, GROUP_COLOURS, chance_level = 1 / nrow(rc))
     \end{column}
     \begin{column}{0.48\textwidth}
       \small
-      \Sexpr{nrow(rc)} players, each buying only one colour set: nobody competes for
-      a city. \Sexpr{format(tour$n_games, big.mark = ",")} games.
-      Dashed line: $1/\Sexpr{nrow(rc)}$, pure luck.
+      \Sexpr{nrow(rc)} players, one colour set each: nobody competes for a city.
+      \Sexpr{format(tour$n_games, big.mark = ",")} games. Dashed: $1/\Sexpr{nrow(rc)}$, pure luck.
       \medskip
 
-      Win rate [95\,\% confidence interval]:\\
-      \Sexpr{nice(rc$player[1])}: \Sexpr{pc(rc$rate[1])}\,\%
-      [\Sexpr{pc(rc$lower[1])}, \Sexpr{pc(rc$upper[1])}].\\
-      \Sexpr{nice(rc$player[2])}: \Sexpr{pc(rc$rate[2])}\,\%
-      [\Sexpr{pc(rc$lower[2])}, \Sexpr{pc(rc$upper[2])}].\\
+      \begin{tabular}{@{}l@{\quad}r@{\quad}l@{}}
+        \Sexpr{nice(rc$player[1])} & \Sexpr{pc(rc$rate[1])}\,\% & [\Sexpr{pc(rc$lower[1])}, \Sexpr{pc(rc$upper[1])}] \\
+        \Sexpr{nice(rc$player[2])} & \Sexpr{pc(rc$rate[2])}\,\% & [\Sexpr{pc(rc$lower[2])}, \Sexpr{pc(rc$upper[2])}]
+      \end{tabular}\\[0.4ex]
       \Sexpr{tie_text}
       \medskip
 
       Orange's edge: its owner completes the set most often
-      (\Sexpr{pc(own[["orange"]])}\,\% of games; next is
-      \Sexpr{gsub("_", " ", best_other)}, \Sexpr{pc(max(own[sets != "orange"]))}\,\%),
-      in line with its high $\pi$ on the heatmap.
+      (\Sexpr{pc(own[["orange"]])}\,\%; next, \Sexpr{gsub("_", " ", best_other)},
+      \Sexpr{pc(max(own[sets != "orange"]))}\,\%), as its high $\pi$ predicts.
     \end{column}
   \end{columns}
 \end{frame}

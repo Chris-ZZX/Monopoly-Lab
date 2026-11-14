@@ -15,34 +15,34 @@ n_sets <- length(set_fanatics(board))
 
 \begin{frame}{Monopoly lite: the rules we simulate}
   \small
-  Each game has \Sexpr{n_pers} players (tournament 1) or \Sexpr{n_sets} players
-  (tournament 2), and everyone starts on GO with €\Sexpr{RULES$starting_cash}.
-  \smallskip
+  \Sexpr{n_pers} players (tournament 1) or \Sexpr{n_sets} (tournament 2),
+  all starting on GO with €\Sexpr{RULES$starting_cash}.
+  \medskip
   \begin{columns}[T]
-    \begin{column}{0.48\textwidth}
+    \begin{column}{0.37\textwidth}
       \textbf{We keep}
       \begin{itemize}\setlength{\itemsep}{0.1ex}
-        \item buying cities, airports and utilities
-        \item rent, doubled on a full colour set without houses
+        \item buying cities, airports, utilities
+        \item double rent on a full set
         \item houses and hotels, built evenly
-        \item all \Sexpr{nrow(cards)} cards, doubles and Jail
-        \item bankruptcy: cash and property go to whoever
-              is owed (a player or the bank)
+        \item all \Sexpr{nrow(cards)} cards, doubles, Jail
+        \item bankruptcy: everything goes to whoever is owed
       \end{itemize}
     \end{column}
-    \begin{column}{0.48\textwidth}
+    \begin{column}{0.31\textwidth}
       \textbf{We drop}
       \begin{itemize}\setlength{\itemsep}{0.1ex}
         \item trading and auctions
-        \item mortgages: short of cash, you sell houses at half price
-        \item the limit on the number of houses
+        \item mortgages: short of cash, sell houses at half price
+        \item the limit on houses
       \end{itemize}
-      \smallskip
+    \end{column}
+    \begin{column}{0.28\textwidth}
       \textbf{Who wins}
       \begin{itemize}\setlength{\itemsep}{0.1ex}
-        \item the last player who is not bankrupt
-        \item after \Sexpr{tour$max_rounds} rounds of turns: the highest net
-              worth (cash + property and buildings at cost)
+        \item the last player not bankrupt
+        \item or, after \Sexpr{tour$max_rounds} rounds, the richest
+              (cash + property at cost)
       \end{itemize}
     \end{column}
   \end{columns}
